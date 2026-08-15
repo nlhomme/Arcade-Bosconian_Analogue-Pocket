@@ -1,8 +1,13 @@
 # Hardware bring-up checklist
 
-**The port boots and plays correctly on a real Analogue Pocket** —
-confirmed. Sections 2, 4 and 5 (boot/attract, controls, audio) are
-covered by that.
+**The port boots and plays correctly on a real Analogue Pocket**, and the
+game's own self-test reports **RAM OK / ROM OK**. Sections 1, 2, 4 and 5
+(self-test, boot/attract, controls, audio) are confirmed.
+The passing self-test is worth more than it looks: it checksums the ROMs
+on real silicon, so it validates the whole load path — SD card, data
+slot, bridge, FIFO, block RAM — and retires the risk that the loader's
+FIFO (~14% margin, overflow checking off) was silently corrupting
+bytes.
 
 What remains unverified is everything a "does it boot and play?" test
 cannot see. Those items are marked **[ ] not yet done** below. None is
@@ -27,7 +32,7 @@ the bitstream or the file layout rather than the game logic.
 
 ---
 
-## 1. Self-test FIRST, before anything else — NOT YET DONE
+## 1. Self-test FIRST, before anything else — CONFIRMED (RAM OK / ROM OK)
 
 Enable **Self-Test Mode** in the core's options menu and launch.
 
