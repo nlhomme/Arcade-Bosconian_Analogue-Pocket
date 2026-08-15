@@ -7,7 +7,8 @@ differs.
 **Status: untested on real hardware.** This port compiles, meets timing,
 and fits the Pocket's FPGA in CI, but it has not yet been run on an
 actual Analogue Pocket. Install at your own risk until this note is
-updated.
+updated. See [`HARDWARE-CHECKLIST.md`](HARDWARE-CHECKLIST.md) for what
+to verify on the device.
 
 ## Install
 
