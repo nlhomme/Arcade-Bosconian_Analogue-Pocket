@@ -20,7 +20,7 @@ jobs:
       - name: Compile
         run: |
           docker run --rm -v "$PWD":/build -w /build/pocket/src/fpga \
-            ghcr.io/raetro/quartus:17.1 \
+            ghcr.io/raetro/quartus:pocket \
             quartus_sh --flow compile ap_core.qpf
 
       - name: Fix output ownership
