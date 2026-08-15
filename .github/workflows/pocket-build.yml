@@ -12,20 +12,19 @@ on:
 jobs:
   synthesis:
     runs-on: ubuntu-latest
-    container: ghcr.io/raetro/quartus:17.1
-    env:
-      # The quartus:17.1 container's glibc predates Node 24 (the new Actions
-      # runner default). Force Node 20 so actions/checkout and
-      # actions/upload-artifact can execute inside the container.
-      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Compile
-        working-directory: pocket/src/fpga
-        run: quartus_sh --flow compile ap_core.qpf
+        run: |
+          docker run --rm -v "$PWD":/build -w /build/pocket/src/fpga \
+            ghcr.io/raetro/quartus:17.1 \
+            quartus_sh --flow compile ap_core.qpf
+
+      - name: Fix output ownership
+        run: sudo chown -R "$(id -u):$(id -g)" pocket/src/fpga/output_files
 
       - name: Check timing closure
         working-directory: pocket/src/fpga
