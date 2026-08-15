@@ -7,11 +7,14 @@ The game logic in `rtl/` is the VHDL core originally written for MiSTer,
 carried over unchanged; everything under `src/` is the openFPGA framework
 around it.
 
-**Status: untested on real hardware.** This port compiles, meets timing,
-and fits the Pocket's FPGA in CI, but it has not yet been run on an
-actual Analogue Pocket. Install at your own risk until this note is
-updated. See [`HARDWARE-CHECKLIST.md`](HARDWARE-CHECKLIST.md) for what
-to verify on the device.
+**Status: working on real hardware.** Confirmed booting and playing on an
+actual Analogue Pocket.
+
+The deeper checks in [`HARDWARE-CHECKLIST.md`](HARDWARE-CHECKLIST.md) have
+not been worked through yet — in particular the game's own ROM self-test,
+confirming each DIP switch produces the right effect, and repeated power
+cycles to see whether sprite-to-background alignment is stable. None of
+those are known to be wrong; they are simply unverified.
 
 ## About the game
 

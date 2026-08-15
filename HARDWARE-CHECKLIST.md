@@ -1,12 +1,16 @@
 # Hardware bring-up checklist
 
-Nothing in this port has ever run on a physical Analogue Pocket. It
-compiles, meets timing, fits the FPGA, and has been reviewed against the
-original VHDL — but every conclusion so far rests on static analysis.
+**The port boots and plays correctly on a real Analogue Pocket** —
+confirmed. Sections 2, 4 and 5 (boot/attract, controls, audio) are
+covered by that.
 
-This checklist covers what a naive "does it boot?" test would miss. Work
-through it in order; the early items are the ones most likely to explain
-a failure in the later ones.
+What remains unverified is everything a "does it boot and play?" test
+cannot see. Those items are marked **[ ] not yet done** below. None is
+known to be wrong; they are simply unchecked, and each has a failure mode
+that looks fine until you look for it specifically.
+
+Work through them in order; the early items are the ones most likely to
+explain a failure in the later ones.
 
 ## Install
 
@@ -23,7 +27,7 @@ the bitstream or the file layout rather than the game logic.
 
 ---
 
-## 1. Self-test FIRST, before anything else
+## 1. Self-test FIRST, before anything else — NOT YET DONE
 
 Enable **Self-Test Mode** in the core's options menu and launch.
 
@@ -40,14 +44,14 @@ FIFO, and block RAM — in one shot.
 - [ ] ROM checks pass
 - [ ] Turn Self-Test Mode back off afterwards
 
-## 2. Boot and attract mode
+## 2. Boot and attract mode — CONFIRMED
 
 - [ ] Boots to attract mode
 - [ ] Starfield scrolls smoothly
 - [ ] Sprites and the radar render correctly
 - [ ] Picture is stable — no rolling, flickering, or dropout
 
-## 3. Sprite-to-background alignment, across several power cycles
+## 3. Sprite-to-background alignment, across several power cycles — NOT YET DONE
 
 Power-cycle the Pocket **at least five times**, checking each boot.
 
@@ -68,7 +72,7 @@ you, the adjustment is `phase_shift1` in
 core slot is 54,257 ps). Do **not** reach for `video_ce` — that is the
 misaligned phase.
 
-## 4. Controls
+## 4. Controls — CONFIRMED
 
 - [ ] **Select** — adds a credit, coin sound plays
 - [ ] **Start** — begins a 1-player game
@@ -83,7 +87,7 @@ With a dock and a second controller:
 Both controllers are ORed onto the same inputs — identical to MiSTer, but
 MiSTer users rarely hit this and dock users will.
 
-## 5. Audio
+## 5. Audio — CONFIRMED
 
 Listen for the absence of problems, not just the presence of sound.
 
@@ -97,10 +101,10 @@ signed; a wrong conversion produces full-scale offset and clipping, which
 is easy to mistake for "the sound is just a bit rough".
 
 Note the upstream MiSTer core already has imperfect shot and explosion
-sounds (see the root `Readme.md`). Reproducing those imperfections is a
+sounds (a pre-existing upstream issue). Reproducing those imperfections is a
 pass; new ones are not.
 
-## 6. Menu reset
+## 6. Menu reset — NOT YET DONE
 
 - [ ] Press **Reset Core** ten or more times in a row
 - [ ] The game restarts every time and never sticks on a black screen
@@ -110,14 +114,14 @@ it is captured. Neither the original nor the stretched version has ever
 run, and an unreliable reset is the expected symptom if the stretch is
 insufficient.
 
-## 7. Reload a ROM while running
+## 7. Reload a ROM while running — NOT YET DONE
 
 - [ ] With the game running, load the ROM again from the core's menu
 - [ ] It reloads and restarts cleanly
 
 A cold boot never exercises this path — reset assert, reload, release.
 
-## 8. DIP switches — the ordering check
+## 8. DIP switches — the ordering check — NOT YET DONE
 
 Each group must produce the *right* effect, not merely some effect. The
 bit ordering was derived by reading the `.mra`, never observed running.
@@ -135,7 +139,7 @@ Free Play and Cocktail Cabinet deserve explicit attention: every other
 setting has a plausible fallback reading, but those two can only be
 confirmed by observing the behaviour.
 
-## 9. Frame rate
+## 9. Frame rate — NOT YET DONE
 
 - [ ] Watch a full minute of gameplay for periodic judder
 
@@ -158,13 +162,11 @@ seen how the Pocket's scaler handles that cadence.
 | Sprites 1px off background | Pixel-phase lottery, see section 3 |
 | A DIP does the wrong thing | Bit packing in `core_top.v` — never `rtl/` |
 
-`rtl/` is shared with the MiSTer build and is byte-identical to `master`.
-Nothing on this checklist should be fixed by editing it.
+`rtl/` is the original MiSTer game core, carried over unchanged. Nothing
+on this checklist should be fixed by editing it — every item above is a
+property of the Pocket framework around it, not of the game logic.
 
-## When the checklist passes
+## When the remaining items pass
 
-1. Update the status banner at the top of `README.md`.
-2. Tag `v0.1.0-pocket` and push it to cut the first release.
-
-The release workflow exists but has never fired. Watch the first tag push
-and confirm the release is created with `nlhomme.Bosconian.zip` attached.
+Update the status note at the top of `README.md` to say the full
+checklist has been worked through.
