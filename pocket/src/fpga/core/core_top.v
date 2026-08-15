@@ -547,14 +547,28 @@ module core_top (
   reg       dsw_selftest   = 1'b0;
   reg       dsw_service    = 1'b0;
 
-  reg reset_action = 0;
+  // reset_action must survive the crossing into bosconian_pocket's
+  // clk_18432 domain (synch_3 there is a plain level synchroniser, not a
+  // pulse-stretcher). bridge_wr is only one clk_74a cycle wide, and
+  // clk_74a (74.25 MHz, 13.468 ns) is ~4x faster than clk_18432
+  // (18.432 MHz, 54.257 ns), so a single-cycle pulse has only a
+  // roughly-1-in-4 chance of being sampled. Stretch it with a down
+  // counter instead: loading 5'd31 holds it for 31 clk_74a cycles
+  // (31 * 13.468 ns = 417.5 ns = 7.7 clk_18432 periods), comfortably
+  // more than the >=4 periods needed to guarantee a captured edge.
+  // The counter self-clears to 0, so a menu reset can never leave the
+  // core stuck in reset.
+  reg [4:0] reset_hold = 0;
+  wire reset_action = |reset_hold;
 
   always @(posedge clk_74a) begin
-    reset_action <= 0;
+    if (bridge_wr && bridge_addr == 32'h10000000 && bridge_wr_data[0])
+      reset_hold <= 5'd31;
+    else if (reset_hold != 0)
+      reset_hold <= reset_hold - 1'b1;
 
     if (bridge_wr) begin
       case (bridge_addr)
-        32'h10000000: reset_action  <= bridge_wr_data[0];
         32'h10020000: dsw_difficulty <= bridge_wr_data[1:0];
         32'h10020004: dsw_continue   <= bridge_wr_data[0];
         32'h10020008: dsw_demosound  <= bridge_wr_data[0];
