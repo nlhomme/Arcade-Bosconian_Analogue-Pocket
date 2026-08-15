@@ -518,7 +518,7 @@ git commit -m "Vendor openFPGA template and add Quartus CI
 Unmodified agg23/openfpga-template plus a bit-reverse tool and a
 GitHub Actions workflow. The timing-check step is required because
 quartus_sh exits 0 on timing failure."
-git push origin analogue
+git push fork analogue
 gh run watch
 ```
 
@@ -699,7 +699,7 @@ In `.github/workflows/pocket-build.yml`, replace the `Upload bitstream` step wit
 ```bash
 git add pocket/dist .github/workflows/pocket-build.yml
 git commit -m "Add Pocket core definition JSONs and CI packaging"
-git push origin analogue
+git push fork analogue
 gh run watch
 ```
 
@@ -1146,7 +1146,7 @@ git commit -m "Add Pocket glue module, PLL config, and video path
 Runs the core at the authentic 18.432 MHz rather than MiSTer's 18.000.
 Video retimes from the 18.432 domain into the 6.144 MHz APF video clock;
 both are phase-locked off one VCO and share an SDC clock group."
-git push origin analogue
+git push fork analogue
 gh run watch
 ```
 
@@ -1246,7 +1246,7 @@ git commit -m "Load ROM from APF dataslot 1
 
 data_loader emits bytes in address order, matching the ioctl semantics
 rtl/bosconian.vhd already implements, so the core is unchanged."
-git push origin analogue
+git push fork analogue
 gh run watch
 ```
 
@@ -1565,7 +1565,7 @@ git commit -m "Add DIP switches to the Pocket menu
 One bridge address per field rather than masked read-modify-write, so
 each can be verified independently on hardware. Defaults reconstitute
 the .mra's 08,68."
-git push origin analogue
+git push fork analogue
 gh run watch
 ```
 
@@ -1736,8 +1736,8 @@ Re-read `pocket/README.md` against what was actually built. Specifically confirm
 ```bash
 git add pocket/README.md Readme.md .github/workflows/pocket-build.yml
 git commit -m "Add Pocket readme and release workflow"
-git push origin analogue
-git tag v0.1.0-pocket && git push origin v0.1.0-pocket
+git push fork analogue
+git tag v0.1.0-pocket && git push fork v0.1.0-pocket
 gh run watch
 ```
 
