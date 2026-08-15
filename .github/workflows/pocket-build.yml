@@ -1,0 +1,107 @@
+name: Pocket Build
+
+on:
+  push:
+    branches: [analogue, master]
+    tags: ['v*']
+  pull_request:
+    branches: [analogue, master]
+    paths-ignore: ['**.md']
+  workflow_dispatch:
+
+jobs:
+  synthesis:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run tool tests
+        run: |
+          cd tools
+          python3 test_build_rom.py
+          python3 test_check_timing.py
+          python3 test_reverse_rbf.py
+
+      - name: Compile
+        run: |
+          docker run --rm -v "$PWD":/build -w /build/src/fpga \
+            ghcr.io/raetro/quartus:pocket \
+            quartus_sh --flow compile ap_core.qpf
+
+      - name: Fix output ownership
+        run: sudo chown -R "$(id -u):$(id -g)" src/fpga/output_files
+
+      - name: Print fit summary
+        working-directory: src/fpga
+        run: |
+          report=output_files/ap_core.fit.rpt
+          test -f "$report" || { echo "no fit report produced"; exit 1; }
+          if grep -qE "Logic utilization|ALMs|registers|block memory bits|RAM Blocks|^Device|^Family" "$report"; then
+            grep -E "Logic utilization|ALMs|registers|block memory bits|RAM Blocks|^Device|^Family" "$report"
+          else
+            echo "expected summary lines not found, printing first 60 lines instead:"
+            sed -n '1,60p' "$report"
+          fi
+
+      - name: Check timing closure
+        run: |
+          python3 tools/check_timing.py \
+            src/fpga/output_files/ap_core.sta.rpt
+
+      - name: Reverse bitstream
+        run: |
+          python3 tools/reverse_rbf.py \
+            src/fpga/output_files/ap_core.rbf \
+            bitstream.rbf_r
+
+      - name: Package core
+        run: |
+          mkdir -p package
+          cp -R dist/* package/
+          mkdir -p package/Assets/bosconian/common
+          rm -f package/Assets/bosconian/common/.gitkeep
+          cp bitstream.rbf_r package/Cores/nlhomme.Bosconian/bitstream.rbf_r
+          ( cd package && zip -r ../nlhomme.Bosconian.zip . )
+
+      - name: Upload core package
+        uses: actions/upload-artifact@v4
+        with:
+          name: pocket-core
+          path: nlhomme.Bosconian.zip
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            src/fpga/output_files/ap_core.fit.rpt
+            src/fpga/output_files/ap_core.sta.rpt
+            src/fpga/output_files/ap_core.map.rpt
+          if-no-files-found: ignore
+
+  release:
+    needs: synthesis
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download core package
+        uses: actions/download-artifact@v4
+        with:
+          name: pocket-core
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: nlhomme.Bosconian.zip
+          body: |
+            Analogue Pocket core for Bosconian - Star Destroyer.
+
+            Extract the zip to the root of your SD card, then build a
+            ROM image (see `README.md`) and select it from the
+            core's Load menu on first launch -- this core has no
+            auto-loading default ROM.

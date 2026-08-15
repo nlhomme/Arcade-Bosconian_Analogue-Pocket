@@ -1,0 +1,144 @@
+{
+  "interact": {
+    "magic": "APF_VER_1",
+    "variables": [
+      {
+        "name": "Reset Core",
+        "id": 1,
+        "type": "action",
+        "enabled": true,
+        "address": "0x10000000",
+        "value": 1
+      },
+
+      {
+        "name": "Difficulty",
+        "id": 10,
+        "type": "list",
+        "enabled": true,
+        "persist": true,
+        "address": "0x10020000",
+        "defaultval": 0,
+        "options": [
+          { "name": "Easy (Rank A)", "value": 0 },
+          { "name": "Medium (Rank B)", "value": 2 },
+          { "name": "Hardest (Rank C)", "value": 1 },
+          { "name": "Auto", "value": 3 }
+        ]
+      },
+      {
+        "name": "Lives",
+        "id": 20,
+        "type": "list",
+        "enabled": true,
+        "persist": true,
+        "address": "0x1002001C",
+        "defaultval": 1,
+        "options": [
+          { "name": "5", "value": 0 },
+          { "name": "3", "value": 1 },
+          { "name": "2", "value": 2 },
+          { "name": "1", "value": 3 }
+        ]
+      },
+      {
+        "name": "Coinage",
+        "id": 30,
+        "type": "list",
+        "enabled": true,
+        "persist": true,
+        "address": "0x10020014",
+        "defaultval": 0,
+        "options": [
+          { "name": "1 Coin 1 Credit", "value": 0 },
+          { "name": "1 Coin 2 Credits", "value": 1 },
+          { "name": "1 Coin 3 Credits", "value": 2 },
+          { "name": "2 Coins 3 Credits", "value": 3 },
+          { "name": "2 Coins 1 Credit", "value": 4 },
+          { "name": "3 Coins 1 Credit", "value": 5 },
+          { "name": "4 Coins 1 Credit", "value": 6 },
+          { "name": "Free Play", "value": 7 }
+        ]
+      },
+      {
+        "name": "Bonus",
+        "id": 40,
+        "type": "list",
+        "enabled": true,
+        "persist": true,
+        "address": "0x10020018",
+        "defaultval": 5,
+        "options": [
+          { "name": "20/70 | 30/120/120", "value": 0 },
+          { "name": "15/50 | 30/100/100", "value": 1 },
+          { "name": "30/100/100 | 30/80/80", "value": 2 },
+          { "name": "20/70/70 | 30/120", "value": 3 },
+          { "name": "15/70/70 | 20/100", "value": 4 },
+          { "name": "15/50/50 | 20/70", "value": 5 },
+          { "name": "10/50/50 | 15/70", "value": 6 },
+          { "name": "Nothing", "value": 7 }
+        ]
+      },
+
+      {
+        "name": "Allow Continue",
+        "id": 50,
+        "type": "check",
+        "enabled": true,
+        "persist": true,
+        "address": "0x10020004",
+        "defaultval": 0,
+        "value": 1
+      },
+      {
+        "name": "Demo Sounds",
+        "id": 51,
+        "type": "check",
+        "enabled": true,
+        "persist": true,
+        "address": "0x10020008",
+        "defaultval": 1,
+        "value": 1
+      },
+      {
+        "name": "Freeze",
+        "id": 52,
+        "type": "check",
+        "enabled": true,
+        "persist": true,
+        "address": "0x1002000C",
+        "defaultval": 0,
+        "value": 1
+      },
+      {
+        "name": "Cocktail Cabinet",
+        "id": 53,
+        "type": "check",
+        "enabled": true,
+        "persist": true,
+        "address": "0x10020010",
+        "defaultval": 0,
+        "value": 1
+      },
+      {
+        "name": "Self-Test Mode",
+        "id": 54,
+        "type": "check",
+        "enabled": true,
+        "address": "0x10020020",
+        "defaultval": 0,
+        "value": 1
+      },
+      {
+        "name": "Service Trigger",
+        "id": 55,
+        "type": "check",
+        "enabled": true,
+        "address": "0x10020024",
+        "defaultval": 0,
+        "value": 1
+      }
+    ],
+    "messages": []
+  }
+}

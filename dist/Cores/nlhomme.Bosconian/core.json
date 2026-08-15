@@ -1,0 +1,22 @@
+{
+  "core": {
+    "magic": "APF_VER_1",
+    "metadata": {
+      "platform_ids": ["bosconian"],
+      "shortname": "Bosconian",
+      "description": "Namco Bosconian - Star Destroyer (1981). GPLv2.",
+      "author": "nlhomme",
+      "url": "https://github.com/nlhomme/Arcade-Bosconian_Analogue-Pocket",
+      "version": "0.1.0",
+      "date_release": "2026-08-15"
+    },
+    "framework": {
+      "target_product": "Analogue Pocket",
+      "version_required": "1.1",
+      "sleep_supported": false,
+      "dock": { "supported": true, "analog_output": false },
+      "hardware": { "link_port": false, "cartridge_adapter": -1 }
+    },
+    "cores": [{ "name": "default", "id": 0, "filename": "bitstream.rbf_r" }]
+  }
+}
