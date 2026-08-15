@@ -332,13 +332,11 @@ module core_top (
   wire reset_n;  // driven by host commands, can be used as core-wide reset
   wire [31:0] cmd_bridge_rd_data;
 
-  wire pll_core_locked_s;
-  synch_3 s01(pll_core_locked, pll_core_locked_s, clk_74a);
-
   // bridge host commands
   // synchronous to clk_74a
-  wire status_boot_done = pll_core_locked_s;
-  wire status_setup_done = pll_core_locked_s;  // rising edge triggers a target command
+  // The PLL moved into bosconian_pocket; nothing here waits on its lock.
+  wire status_boot_done = 1'b1;
+  wire status_setup_done = 1'b1;  // rising edge triggers a target command
   wire status_running = reset_n;  // we are running as soon as reset_n goes high
 
   wire dataslot_requestread;
@@ -474,147 +472,55 @@ module core_top (
   ////////////////////////////////////////////////////////////////////////////////////////
 
 
-  // video generation
-  // ~12,288,000 hz pixel clock
-  //
-  // we want our video mode of 320x240 @ 60hz, this results in 204800 clocks per frame
-  // we need to add hblank and vblank times to this, so there will be a nondisplay area. 
-  // it can be thought of as a border around the visible area.
-  // to make numbers simple, we can have 400 total clocks per line, and 320 visible.
-  // dividing 204800 by 400 results in 512 total lines per frame, and 240 visible.
-  // this pixel clock is fairly high for the relatively low resolution, but that's fine.
-  // PLL output has a minimum output frequency anyway.
-
-
-  assign video_rgb_clock = clk_core_12288;
-  assign video_rgb_clock_90 = clk_core_12288_90deg;
-  assign video_rgb = vidout_rgb;
-  assign video_de = vidout_de;
-  assign video_skip = vidout_skip;
-  assign video_vs = vidout_vs;
-  assign video_hs = vidout_hs;
-
-  localparam VID_V_BPORCH = 'd10;
-  localparam VID_V_ACTIVE = 'd240;
-  localparam VID_V_TOTAL = 'd512;
-  localparam VID_H_BPORCH = 'd10;
-  localparam VID_H_ACTIVE = 'd320;
-  localparam VID_H_TOTAL = 'd400;
-
-  reg [15:0] frame_count;
-
-  reg [9:0] x_count;
-  reg [9:0] y_count;
-
-  wire [9:0] visible_x = x_count - VID_H_BPORCH;
-  wire [9:0] visible_y = y_count - VID_V_BPORCH;
-
-  reg [23:0] vidout_rgb;
-  reg vidout_de, vidout_de_1;
-  reg vidout_skip;
-  reg vidout_vs;
-  reg vidout_hs, vidout_hs_1;
-
-  reg [9:0] square_x = 'd135;
-  reg [9:0] square_y = 'd95;
-
-  always @(posedge clk_core_12288 or negedge reset_n) begin
-
-    if (~reset_n) begin
-
-      x_count <= 0;
-      y_count <= 0;
-
-    end else begin
-      vidout_de <= 0;
-      vidout_skip <= 0;
-      vidout_vs <= 0;
-      vidout_hs <= 0;
-
-      vidout_hs_1 <= vidout_hs;
-      vidout_de_1 <= vidout_de;
-
-      // x and y counters
-      x_count <= x_count + 1'b1;
-      if (x_count == VID_H_TOTAL - 1) begin
-        x_count <= 0;
-
-        y_count <= y_count + 1'b1;
-        if (y_count == VID_V_TOTAL - 1) begin
-          y_count <= 0;
-        end
-      end
-
-      // generate sync 
-      if (x_count == 0 && y_count == 0) begin
-        // sync signal in back porch
-        // new frame
-        vidout_vs   <= 1;
-        frame_count <= frame_count + 1'b1;
-      end
-
-      // we want HS to occur a bit after VS, not on the same cycle
-      if (x_count == 3) begin
-        // sync signal in back porch
-        // new line
-        vidout_hs <= 1;
-      end
-
-      // inactive screen areas are black
-      vidout_rgb <= 24'h0;
-      // generate active video
-      if (x_count >= VID_H_BPORCH && x_count < VID_H_ACTIVE + VID_H_BPORCH) begin
-
-        if (y_count >= VID_V_BPORCH && y_count < VID_V_ACTIVE + VID_V_BPORCH) begin
-          // data enable. this is the active region of the line
-          vidout_de <= 1;
-
-          vidout_rgb[23:16] <= 8'd60;
-          vidout_rgb[15:8] <= 8'd60;
-          vidout_rgb[7:0] <= 8'd60;
-
-        end
-      end
-    end
-  end
-
-
+  // Bosconian core: clocks, video retiming, audio and inputs all live in
+  // bosconian_pocket. This file stays the APF bridge adapter.
+  wire [15:0] audio_l;
+  wire [15:0] audio_r;
+  // Placeholders until Task 5 and Task 8 fill them in.
+  wire [15:0] dn_addr = 0;
+  wire  [7:0] dn_data = 0;
+  wire        dn_wr = 0;
+  wire        dn_active = 0;
+  wire  [7:0] dip_a = 8'h08;
+  wire  [7:0] dip_b = 8'h68;
+  wire        self_test = 0;
+  wire        service = 0;
+  bosconian_pocket bc (
+      .clk_74a(clk_74a),
+      .reset_n(reset_n),
+      .dn_addr  (dn_addr),
+      .dn_data  (dn_data),
+      .dn_wr    (dn_wr),
+      .dn_active(dn_active),
+      .dip_a    (dip_a),
+      .dip_b    (dip_b),
+      .self_test(self_test),
+      .service  (service),
+      .cont1_key(cont1_key),
+      .cont2_key(cont2_key),
+      .video_rgb         (video_rgb),
+      .video_de          (video_de),
+      .video_hs          (video_hs),
+      .video_vs          (video_vs),
+      .video_skip        (video_skip),
+      .video_rgb_clock   (video_rgb_clock),
+      .video_rgb_clock_90(video_rgb_clock_90),
+      .audio_l(audio_l),
+      .audio_r(audio_r)
+  );
   ///////////////////////////////////////////////
-
-  wire [15:0] audio_l = 0;
-
   sound_i2s #(
-      .CHANNEL_WIDTH(15)
+      .CHANNEL_WIDTH(16),
+      .SIGNED_INPUT (1)
   ) sound_i2s (
       .clk_74a  (clk_74a),
-      .clk_audio(clk_core_12288),
-
-      .audio_l(audio_l[15:1]),
-      .audio_r(audio_l[15:1]),
-
+      .clk_audio(video_rgb_clock),
+      .audio_l(audio_l),
+      .audio_r(audio_r),
       .audio_mclk(audio_mclk),
       .audio_lrck(audio_lrck),
       .audio_dac (audio_dac)
   );
-
-  ///////////////////////////////////////////////
-
-
-  wire clk_core_12288;
-  wire clk_core_12288_90deg;
-
-  wire pll_core_locked;
-
-  mf_pllbase mp1 (
-      .refclk(clk_74a),
-      .rst   (0),
-
-      .outclk_0(clk_core_12288),
-      .outclk_1(clk_core_12288_90deg),
-
-      .locked(pll_core_locked)
-  );
-
 
 
 endmodule
