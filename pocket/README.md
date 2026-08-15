@@ -51,6 +51,10 @@ All DIP switches are in the Pocket's core options menu: difficulty,
 coinage, bonus, lives, cabinet type, demo sounds, allow continue, plus
 self-test and service.
 
+Bonus values show two readings separated by `|` (e.g. "Bonus 20/70 |
+30/120/120") because the meaning depends on the Lives setting — this is
+how the original hardware behaves, not a labelling mistake.
+
 ## Not implemented
 
 - **Pause.** The MiSTer core's pause handling can crash the game at
