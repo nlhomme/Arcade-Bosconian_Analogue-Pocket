@@ -2,7 +2,7 @@
 # user core constraints
 #
 # PLL outputs 0 (18.432 MHz), 1 (6.144 MHz) and 2 (6.144 MHz, 90 deg) are
-# phase-locked off a common 737.28 MHz VCO and the video retiming register
+# phase-locked off a common 608.27 MHz VCO and the video retiming register
 # crosses between them on purpose. They must share a clock group, or
 # TimeQuest will treat a real, timed path as asynchronous.
 #

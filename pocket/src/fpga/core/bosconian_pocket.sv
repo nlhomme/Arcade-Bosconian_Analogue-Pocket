@@ -35,7 +35,10 @@ module bosconian_pocket (
     output wire        video_rgb_clock_90,
 
     output wire [15:0] audio_l,
-    output wire [15:0] audio_r
+    output wire [15:0] audio_r,
+
+    // core_top gates the APF boot/setup status bits on this
+    output wire pll_locked
 );
 
   ////////////////////////////////////////////////////////////////////////
@@ -48,7 +51,6 @@ module bosconian_pocket (
   wire clk_18432;
   wire clk_6144;
   wire clk_6144_90;
-  wire pll_locked;
 
   mf_pllbase pll (
       .refclk(clk_74a),
@@ -83,12 +85,29 @@ module bosconian_pocket (
   ////////////////////////////////////////////////////////////////////////
   // Inputs
   //
+  // Everything here arrives in the clk_74a domain, which the .sdc cuts as
+  // a false path against the core clock -- nothing times these. Cross them
+  // into clk_18432 before decoding. The DIPs and the two switches are
+  // static after load, but they sit on the same boundary and a synchroniser
+  // costs nothing.
+  //
   // APF cont1_key bit order:
   //   0 up, 1 down, 2 left, 3 right, 4 A, 5 B, 6 X, 7 Y,
   //   8 L1, 9 R1, 10 L2, 11 R2, 12 L3, 13 R3, 14 select, 15 start
   ////////////////////////////////////////////////////////////////////////
 
-  wire [15:0] joy = cont1_key | cont2_key;
+  wire [15:0] cont1_key_s, cont2_key_s;
+  synch_3 #(16) s_c1 (cont1_key, cont1_key_s, clk_18432);
+  synch_3 #(16) s_c2 (cont2_key, cont2_key_s, clk_18432);
+
+  wire [7:0] dip_a_s, dip_b_s;
+  wire self_test_s, service_s;
+  synch_3 #(8) s_dipa (dip_a, dip_a_s, clk_18432);
+  synch_3 #(8) s_dipb (dip_b, dip_b_s, clk_18432);
+  synch_3 s_selftest (self_test, self_test_s, clk_18432);
+  synch_3 s_service (service, service_s, clk_18432);
+
+  wire [15:0] joy = cont1_key_s | cont2_key_s;
 
   wire m_up    = joy[0];
   wire m_down  = joy[1];
@@ -96,10 +115,10 @@ module bosconian_pocket (
   wire m_right = joy[3];
   wire m_fire  = joy[4] | joy[5] | joy[6] | joy[7];
 
-  wire m_coin1  = cont1_key[14];
-  wire m_coin2  = cont2_key[14];
-  wire m_start1 = cont1_key[15];
-  wire m_start2 = cont2_key[15] | cont1_key[8];
+  wire m_coin1  = cont1_key_s[14];
+  wire m_coin2  = cont2_key_s[14];
+  wire m_start1 = cont1_key_s[15];
+  wire m_start2 = cont2_key_s[15] | cont1_key_s[8];
 
   ////////////////////////////////////////////////////////////////////////
   // Core
@@ -128,8 +147,8 @@ module bosconian_pocket (
 
       .audio(core_audio),
 
-      .self_test(self_test),
-      .service  (service),
+      .self_test(self_test_s),
+      .service  (service_s),
 
       .coin1(m_coin1),
       .coin2(m_coin2),
@@ -143,8 +162,8 @@ module bosconian_pocket (
       .fire2(m_fire),
 
       // The core inverts internally, same as the MiSTer top level.
-      .dip_switch_a(~dip_a),
-      .dip_switch_b(~dip_b),
+      .dip_switch_a(~dip_a_s),
+      .dip_switch_b(~dip_b_s),
 
       // MiSTer analog-output tweaks; meaningless on the Pocket.
       .h_offset(4'd0),
@@ -156,15 +175,20 @@ module bosconian_pocket (
   // Video retiming
   //
   // The core produces pixels in the 18.432 MHz domain on a 6 MHz enable.
-  // clk_6144 is the same PLL VCO divided by 120 while clk_18432 is
-  // divided by 40, so they are phase-locked and a single register stage
-  // is sufficient. The .sdc must place them in the same clock group.
+  // clk_6144 is the same PLL VCO (608.27 MHz) divided by 99 while clk_18432
+  // is divided by 33: an exact 3:1 ratio off one VCO, so edges are
+  // coincident and a single register stage is sufficient. The .sdc must
+  // place them in the same clock group, or that crossing goes untimed.
   //
-  // If pixels come out sheared or doubled, the 6.144 MHz clock is
-  // sampling on the wrong phase of the core's pixel enable. The core
-  // exposes that enable as its `video_ce` output (unconnected here, and
-  // also unconnected in the MiSTer top level) -- bring it out and use it
-  // to qualify this register rather than free-running.
+  // If pixels come out sheared or doubled, this register is sampling on
+  // the wrong phase of the core's pixel pipeline. Do NOT reach for the
+  // core's `video_ce` output: it is high at slots 0 and 3, which is the
+  // MISALIGNED phase. The pipeline actually advances on `video_6M_ena`
+  // (slots 2 and 5), which rtl/bosconian.vhd does not bring out to a port
+  // -- and rtl/ is read-only here. The knob to turn instead is
+  // phase_shift1 in mf_pllbase_0002.v: walk the 6.144 MHz capture clock in
+  // picoseconds until it samples mid-pixel. One 18.432 MHz period is
+  // 54257 ps, so a whole slot is that much of shift.
   ////////////////////////////////////////////////////////////////////////
 
   reg [23:0] rgb_r;

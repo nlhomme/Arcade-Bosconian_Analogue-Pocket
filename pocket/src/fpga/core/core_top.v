@@ -332,11 +332,17 @@ module core_top (
   wire reset_n;  // driven by host commands, can be used as core-wide reset
   wire [31:0] cmd_bridge_rd_data;
 
+  // The PLL lives inside bosconian_pocket now, but its lock still gates the
+  // status bits: core_bridge_cmd edge-detects status_setup_done to queue
+  // READYTORUN, so it has to actually rise.
+  wire pll_core_locked;
+  wire pll_core_locked_s;
+  synch_3 s01(pll_core_locked, pll_core_locked_s, clk_74a);
+
   // bridge host commands
   // synchronous to clk_74a
-  // The PLL moved into bosconian_pocket; nothing here waits on its lock.
-  wire status_boot_done = 1'b1;
-  wire status_setup_done = 1'b1;  // rising edge triggers a target command
+  wire status_boot_done = pll_core_locked_s;
+  wire status_setup_done = pll_core_locked_s;  // rising edge triggers a target command
   wire status_running = reset_n;  // we are running as soon as reset_n goes high
 
   wire dataslot_requestread;
@@ -506,7 +512,8 @@ module core_top (
       .video_rgb_clock   (video_rgb_clock),
       .video_rgb_clock_90(video_rgb_clock_90),
       .audio_l(audio_l),
-      .audio_r(audio_r)
+      .audio_r(audio_r),
+      .pll_locked(pll_core_locked)
   );
   ///////////////////////////////////////////////
   sound_i2s #(
