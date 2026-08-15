@@ -90,11 +90,14 @@ template to re-sync against it, and the glue stays readable without APF context.
 ```
 core_top → bosconian_pocket:
     clk_74a
+    reset_n                               already ANDed with the menu Reset
+                                           action at core_top (no separate
+                                           reset_req port -- see deviation
+                                           note below)
     dn_addr[15:0], dn_data[7:0], dn_wr    ROM stream
     dn_active                             held true for whole download
     dip_a[7:0], dip_b[7:0]                DIP registers
     self_test, service
-    reset_req                             menu Reset action
     cont1_key[15:0], cont2_key[15:0]
 
 bosconian_pocket → core_top:
@@ -102,6 +105,12 @@ bosconian_pocket → core_top:
     video_rgb_clock, video_rgb_clock_90
     audio_l[15:0], audio_r[15:0]          signed
 ```
+
+**Deviation from this spec:** originally planned as a dedicated `reset_req`
+port carrying the menu Reset action into `bosconian_pocket`. The
+implementation instead ANDs it into `reset_n` at `core_top` (`reset_n &
+~reset_action`) and passes the combined signal through the existing
+`reset_n` port. Same behaviour, one fewer port -- kept as built.
 
 ### Clocks
 
@@ -236,6 +245,13 @@ rather than leaving them floating:
 
 Asserted on any of: PLL not locked, a startup delay, ROM download in progress,
 or the menu Reset action.
+
+**Deviation from this spec:** the implementation is `~reset_n_s |
+~pll_locked_s | dn_active_s` -- no separate startup-delay term. This is safe
+to drop: APF holds `reset_n` low from power-on until Reset Exit, which
+happens well after the PLL locks, so `~reset_n_s` already covers the startup
+window a dedicated delay would have covered. Recorded here because it was a
+requirement silently dropped, not because it caused a problem.
 
 ## ROM build script
 

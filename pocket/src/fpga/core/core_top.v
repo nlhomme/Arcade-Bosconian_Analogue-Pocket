@@ -440,41 +440,6 @@ module core_top (
       .datatable_q   (datatable_q)
   );
 
-  //   data_loader #(
-  //       .ADDRESS_MASK_UPPER_4(4'h0),
-  //       .ADDRESS_SIZE(25)
-  //   ) data_loader (
-  //       .clk_74a(clk_74a),
-  //       .clk_memory(clk_sys_21_48),
-
-  //       .bridge_wr(bridge_wr),
-  //       .bridge_endian_little(bridge_endian_little),
-  //       .bridge_addr(bridge_addr),
-  //       .bridge_wr_data(bridge_wr_data),
-
-  //       .write_en  (ioctl_wr),
-  //       .write_addr(ioctl_addr),
-  //       .write_data(ioctl_dout)
-  //   );
-
-  //   data_unloader #(
-  //       .ADDRESS_MASK_UPPER_4(4'h2),
-  //       .ADDRESS_SIZE(25)
-  //   ) data_unloader (
-  //       .clk_74a(clk_74a),
-  //       .clk_memory(clk_sys_21_48),
-
-  //       .bridge_rd(bridge_rd),
-  //       .bridge_endian_little(bridge_endian_little),
-  //       .bridge_addr(bridge_addr),
-  //       .bridge_rd_data(sd_read_data),
-
-  //       .read_en  (sd_rd),
-  //       .read_addr(sd_buff_addr_out),
-  //       .read_data(sd_buff_din)
-  //   );
-
-
   ////////////////////////////////////////////////////////////////////////////////////////
 
 

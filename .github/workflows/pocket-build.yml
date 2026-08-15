@@ -2,11 +2,10 @@ name: Pocket Build
 
 on:
   push:
-    branches: [analogue]
+    branches: [analogue, master]
     tags: ['v*']
-    paths-ignore: ['**.md']
   pull_request:
-    branches: [analogue]
+    branches: [analogue, master]
     paths-ignore: ['**.md']
   workflow_dispatch:
 
@@ -17,6 +16,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Run tool tests
+        run: |
+          cd pocket/tools
+          python3 test_build_rom.py
+          python3 test_check_timing.py
+          python3 test_reverse_rbf.py
 
       - name: Compile
         run: |
@@ -55,6 +61,7 @@ jobs:
           mkdir -p package
           cp -R pocket/dist/* package/
           mkdir -p package/Assets/bosconian/common
+          rm -f package/Assets/bosconian/common/.gitkeep
           cp bitstream.rbf_r package/Cores/nlhomme.Bosconian/bitstream.rbf_r
           ( cd package && zip -r ../nlhomme.Bosconian.zip . )
 
@@ -95,6 +102,6 @@ jobs:
             Analogue Pocket core for Bosconian - Star Destroyer.
 
             Extract the zip to the root of your SD card, then build a
-            ROM image and place it at
-            `Assets/bosconian/common/bosco.rom`.
-            See `pocket/README.md` for ROM build instructions.
+            ROM image (see `pocket/README.md`) and select it from the
+            core's Load menu on first launch -- this core has no
+            auto-loading default ROM.

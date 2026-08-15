@@ -17,8 +17,15 @@ updated.
 2. Extract it to the root of your Pocket's SD card. It adds
    `Cores/nlhomme.Bosconian/`, `Platforms/bosconian.json`, and an empty
    `Assets/bosconian/common/`.
-3. Build a ROM image (below) and place it at
-   `Assets/bosconian/common/bosco.rom`.
+3. Build a ROM image (below). Placing it at
+   `Assets/bosconian/common/bosco.rom` is a convenient spot, but this core
+   has no default filename configured, so the Pocket will **not** load it
+   automatically.
+4. Launch the core on your Pocket and select `bosco.rom` from its file
+   browser (Load menu). Unlike cores that ship a fixed default ROM
+   filename, this core's data slot has none configured, so it always
+   presents the file picker rather than auto-loading -- copying the file
+   into place is not by itself enough.
 
 ## Building the ROM
 

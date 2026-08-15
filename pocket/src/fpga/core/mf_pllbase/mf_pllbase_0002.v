@@ -1,3 +1,17 @@
+// WARNING -- output frequencies below are HAND-EDITED, not IP-generated.
+//
+// This file specifies outclk_0 = 18.432 MHz, outclk_1 = 6.144 MHz, and
+// outclk_2 = 6.144 MHz @ 90 degrees -- the real clocks this core runs on.
+//
+// The sibling IP metadata (mf_pllbase.v, mf_pllbase.ppf, mf_pllbase.spd)
+// is STALE: it still advertises the old frequencies (e.g. 12.288 MHz,
+// 133.119989 MHz) from before this file was hand-edited.
+//
+// Opening this PLL in Quartus's IP parameter editor regenerates this file
+// FROM THAT STALE METADATA. It will silently revert to the wrong
+// frequencies -- the design still compiles green and the game will run at
+// the wrong rate with no error anywhere. Do NOT regenerate this IP via the
+// parameter editor. If parameters must change, hand-edit this file again.
 `timescale 1ns/10ps
 module  mf_pllbase_0002(
 
