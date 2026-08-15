@@ -45,22 +45,29 @@ Arcade-Bosconian_MiSTer/            (branch: analogue)
 ├── sys/  Arcade-Bosconian.sv/.qsf  unchanged, MiSTer build still works
 ├── docs/superpowers/specs/         this document
 └── pocket/
-    ├── Bosconian_Pocket.qpf/.qsf/.sdc
-    ├── files.qip                   references ../rtl/*, adds pocket sources
-    ├── apf/                        vendored from Analogue core template, unmodified
-    ├── core/
-    │   ├── core_top.v              APF top level; owns the bridge
-    │   ├── bosconian_pocket.sv     our glue — the `emu` equivalent
-    │   └── pll/                    fractional-N PLL from clk_74a
-    ├── util/                       data_loader.v, sound_i2s.v, synch.v (MIT)
+    ├── src/fpga/                   vendored from agg23/openfpga-template
+    │   ├── ap_core.qpf/.qsf
+    │   ├── apf/                    APF framework, unmodified (incl. synch_3)
+    │   └── core/
+    │       ├── core_top.v          APF top level; owns the bridge
+    │       ├── bosconian_pocket.sv our glue — the `emu` equivalent
+    │       ├── bosconian_rtl.qip   points Quartus at ../../../../rtl/*
+    │       ├── mf_pllbase*         fractional-N PLL from clk_74a
+    │       ├── data_loader.sv      dataslot → dn_* stream
+    │       ├── sound_i2s.sv        16-bit → I2S
+    │       └── sync_fifo.sv        used by sound_i2s
     ├── dist/                       mirrors the SD card tree
-    │   ├── Cores/nlhomme.Bosconian/*.json, icon.bin
+    │   ├── Cores/nlhomme.Bosconian/*.json
     │   ├── Platforms/bosconian.json
     │   └── Assets/bosconian/common/
     └── tools/
         ├── build_rom.py            .mra + MAME zips → .rom
-        └── reverse.py              .rbf → .rbf_r
+        └── reverse_rbf.py          .rbf → .rbf_r
 ```
+
+The template's own `src/fpga/` layout is kept rather than reorganised: it
+matches every other openFPGA core, and reorganising it would break the qsf's
+relative paths for no benefit.
 
 ## Architecture
 
@@ -83,7 +90,7 @@ template to re-sync against it, and the glue stays readable without APF context.
 ```
 core_top → bosconian_pocket:
     clk_74a
-    dn_addr[16:0], dn_data[7:0], dn_wr    ROM stream
+    dn_addr[15:0], dn_data[7:0], dn_wr    ROM stream
     dn_active                             held true for whole download
     dip_a[7:0], dip_b[7:0]                DIP registers
     self_test, service
@@ -106,16 +113,21 @@ One PLL from `clk_74a` (74.25 MHz). All outputs integer-related off a common
 | c0 | 18.432 MHz | `clock_18` → `bosconian` |
 | c1 | 6.144 MHz | `video_rgb_clock` |
 | c2 | 6.144 MHz @ 90° | `video_rgb_clock_90` |
-| c3 | 12.288 MHz | `sound_i2s` master clock |
+
+No audio clock is needed: `sound_i2s` derives its 12.288 MHz master clock from
+`clk_74a` with an internal fractional accumulator.
 
 This corrects an upstream inaccuracy: MiSTer runs the core at a flat 18.000 MHz,
 so the game runs about 2.3% slow. 18.432 MHz is the authentic Namco rate
 (6.144 MHz pixel clock × 3).
 
 Requires fractional-N PLL mode — 74.25 MHz to 6.144 MHz has no integer solution
-(their gcd is 6 kHz, needing a divider of 12375). If fractional-N cannot close
-timing, fall back to 18.0 / 6.0 / 12.0 MHz, which reproduces MiSTer's current
-behaviour exactly and is a known-good state.
+(their gcd is 6 kHz, needing a divider of 12375). The template's PLL already has
+`fractional_vco_multiplier("true")` and already achieves 12.287999 MHz from
+74.25 MHz, so this is proven achievable. The solution is VCO = 737.28 MHz
+(18.432 × 40; 737.28 / 6.144 = 120 exactly), well inside the Cyclone V range. If
+it nonetheless fails to close, fall back to 18.0 / 6.0 MHz, which reproduces
+MiSTer's current behaviour exactly and is a known-good state.
 
 ### Video
 
@@ -140,13 +152,16 @@ Core `audio[15:0]` → `sound_i2s` → `audio_mclk` / `audio_lrck` / `audio_dac`
 Mono, duplicated to both channels.
 
 **The samples are unsigned.** MiSTer sets `AUDIO_S = 0`. I2S expects signed, so
-the conversion is `{~audio[15], audio[14:0]}`. Omitting this produces a
-full-scale DC offset and clipping rather than silence, which is easy to
-misdiagnose as a broken sound core.
+the conversion is `{~audio[15], audio[14:0]}`, instantiated with
+`CHANNEL_WIDTH(16)` and `SIGNED_INPUT(1)`. Omitting this produces a full-scale
+DC offset and clipping rather than silence, which is easy to misdiagnose as a
+broken sound core. `sound_i2s` refuses to elaborate with `CHANNEL_WIDTH(16)` and
+`SIGNED_INPUT(0)` — it raises `$error` — so the conversion cannot be skipped
+silently.
 
 ### ROM loading
 
-Dataslot 1 → `data_loader` → the existing `dn_addr[16:0] / dn_data[7:0] / dn_wr`
+Dataslot 1 → `data_loader` → the existing `dn_addr[15:0] / dn_data[7:0] / dn_wr`
 port on `bosconian`. `data_loader` emits bytes in address order, which is
 identical to MiSTer's `ioctl_*` semantics, so `rtl/` needs no changes at all.
 
@@ -293,8 +308,9 @@ There is no simulation harness in this repo and this design does not add one.
 
 ## Licensing
 
-This repo is GPLv2. The Analogue APF template and the agg23 utility modules are
-permissively licensed, so vendoring them is fine. The resulting core inherits
+This repo is GPLv2. `agg23/openfpga-template` — the APF framework and the
+utility modules alike — is permissively licensed (MIT), so vendoring it is
+fine, provided the original headers stay intact. The resulting core inherits
 GPLv2 and should say so in `core.json` metadata and the Pocket readme.
 
 ## Decisions
@@ -303,7 +319,7 @@ GPLv2 and should say so in `core.json` metadata and the Pocket readme.
 |---|---|---|
 | Location | This repo, `analogue` branch | One RTL source of truth; upstream MiSTer fixes still merge |
 | ROM delivery | Concatenated `.rom` + own build script | Self-contained and reproducible in CI |
-| Framework | Analogue template + agg23 utilities | ~250 lines of glue we own; no framework conventions to learn |
+| Framework | `agg23/openfpga-template` | Ships APF *and* `data_loader`/`sound_i2s`/`sync_fifo`/`synch_3` in one repo — one vendoring step, ~250 lines of glue we own |
 | v1 scope | Boot + DIPs only | Pause and hiscore are both broken upstream |
 | Author id | `nlhomme` | Matches the GitHub account |
 | Build | GitHub Actions | Quartus cannot run on the dev machine |
