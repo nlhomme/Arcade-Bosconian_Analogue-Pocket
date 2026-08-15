@@ -49,11 +49,19 @@ jobs:
             pocket/src/fpga/output_files/ap_core.rbf \
             bitstream.rbf_r
 
-      - name: Upload bitstream
+      - name: Package core
+        run: |
+          mkdir -p package
+          cp -R pocket/dist/* package/
+          mkdir -p package/Assets/bosconian/common
+          cp bitstream.rbf_r package/Cores/nlhomme.Bosconian/bitstream.rbf_r
+          ( cd package && zip -r ../nlhomme.Bosconian.zip . )
+
+      - name: Upload core package
         uses: actions/upload-artifact@v4
         with:
-          name: bitstream
-          path: bitstream.rbf_r
+          name: pocket-core
+          path: nlhomme.Bosconian.zip
 
       - name: Upload reports
         if: always()
