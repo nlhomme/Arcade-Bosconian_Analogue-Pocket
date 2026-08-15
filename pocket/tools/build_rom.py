@@ -44,10 +44,28 @@ def parse_mra(path):
                     f"{path}: part {name!r} uses unsupported attribute "
                     f"{attr!r}; this script only does plain concatenation"
                 )
-        parts.append((name, (part.get("crc") or "").lower()))
+        crc = (part.get("crc") or "").lower()
+        if not crc:
+            raise ValueError(
+                f"{path}: part {name!r} has no crc attribute; "
+                "integrity checking is mandatory"
+            )
+        parts.append((name, crc))
 
     if not parts:
         raise ValueError(f"{path}: <rom> has no parts")
+
+    # Detect nested parts: if recursive search finds more parts than direct children,
+    # the .mra uses a structure we don't support (e.g., <interleave><part/></interleave>)
+    direct_count = len(list(rom.findall("part")))
+    recursive_count = len(list(rom.iter("part")))
+    if direct_count != recursive_count:
+        raise ValueError(
+            f"{path}: <rom> contains nested <part> elements "
+            f"({recursive_count} total, {direct_count} direct); "
+            "this script only supports flat part lists"
+        )
+
     return zips, parts
 
 
@@ -84,7 +102,7 @@ def build_rom(mra_path, rom_dirs, out_path):
         for name, expected_crc in parts:
             data = read_part(archives, name)
             actual_crc = crc32_hex(data)
-            if expected_crc and actual_crc != expected_crc:
+            if actual_crc != expected_crc:
                 raise ValueError(
                     f"CRC mismatch for {name!r}: .mra expects {expected_crc}, "
                     f"file is {actual_crc}"

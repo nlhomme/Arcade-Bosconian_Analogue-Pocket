@@ -89,6 +89,85 @@ def test_build_rom_reports_missing_part():
             raise AssertionError("expected ValueError on missing part")
 
 
+def test_parse_mra_rejects_nested_parts():
+    """Nested parts (e.g., <interleave><part/></interleave>) are silently skipped
+    by findall("part"). Detect this discrepancy and raise ValueError."""
+    with tempfile.TemporaryDirectory() as d:
+        tmp = Path(d)
+        data_a = b"AAAA"
+        with zipfile.ZipFile(tmp / "test.zip", "w") as z:
+            z.writestr("a.bin", data_a)
+        mra = tmp / "test.mra"
+        mra.write_text(
+            f"""<misterromdescription>
+  <name>Test</name>
+  <rom index="0" md5="none" zip="test.zip">
+    <part crc="{crc32_hex(data_a)}" name="a.bin"/>
+    <interleave>
+      <part crc="{crc32_hex(data_a)}" name="a.bin"/>
+    </interleave>
+  </rom>
+</misterromdescription>
+"""
+        )
+        try:
+            parse_mra(mra)
+        except ValueError as exc:
+            assert "nested" in str(exc).lower()
+        else:
+            raise AssertionError("expected ValueError on nested parts")
+
+
+def test_parse_mra_requires_crc_attribute():
+    """A part with no crc attribute skips integrity checking. This is an error."""
+    with tempfile.TemporaryDirectory() as d:
+        tmp = Path(d)
+        data_a = b"AAAA"
+        with zipfile.ZipFile(tmp / "test.zip", "w") as z:
+            z.writestr("a.bin", data_a)
+        mra = tmp / "test.mra"
+        mra.write_text(
+            """<misterromdescription>
+  <name>Test</name>
+  <rom index="0" md5="none" zip="test.zip">
+    <part name="a.bin"/>
+  </rom>
+</misterromdescription>
+"""
+        )
+        try:
+            parse_mra(mra)
+        except ValueError as exc:
+            assert "crc" in str(exc).lower() and "a.bin" in str(exc)
+        else:
+            raise AssertionError("expected ValueError on missing crc")
+
+
+def test_parse_mra_rejects_unsupported_attributes():
+    """Parts with unsupported attributes (map, repeat, offset, length) raise ValueError."""
+    with tempfile.TemporaryDirectory() as d:
+        tmp = Path(d)
+        data_a = b"AAAA"
+        with zipfile.ZipFile(tmp / "test.zip", "w") as z:
+            z.writestr("a.bin", data_a)
+        mra = tmp / "test.mra"
+        mra.write_text(
+            f"""<misterromdescription>
+  <name>Test</name>
+  <rom index="0" md5="none" zip="test.zip">
+    <part crc="{crc32_hex(data_a)}" name="a.bin" repeat="2"/>
+  </rom>
+</misterromdescription>
+"""
+        )
+        try:
+            parse_mra(mra)
+        except ValueError as exc:
+            assert "repeat" in str(exc) and "a.bin" in str(exc)
+        else:
+            raise AssertionError("expected ValueError on unsupported attribute")
+
+
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):
         if name.startswith("test_"):
