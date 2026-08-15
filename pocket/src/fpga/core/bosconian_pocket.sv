@@ -38,7 +38,11 @@ module bosconian_pocket (
     output wire [15:0] audio_r,
 
     // core_top gates the APF boot/setup status bits on this
-    output wire pll_locked
+    output wire pll_locked,
+
+    // 18.432 MHz core clock, exposed so core_top can clock the ROM loader
+    // in the same domain the core samples dn_wr -- see data_loader instance.
+    output wire clk_core
 );
 
   ////////////////////////////////////////////////////////////////////////
@@ -68,6 +72,7 @@ module bosconian_pocket (
   assign video_rgb_clock    = clk_6144;
   assign video_rgb_clock_90 = clk_6144_90;
   assign video_skip         = 1'b0;
+  assign clk_core           = clk_18432;
 
   // Reset while the PLL is unlocked, while APF holds us in reset, and for
   // the whole ROM download.

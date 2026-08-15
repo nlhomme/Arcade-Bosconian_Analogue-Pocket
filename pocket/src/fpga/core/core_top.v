@@ -482,11 +482,52 @@ module core_top (
   // bosconian_pocket. This file stays the APF bridge adapter.
   wire [15:0] audio_l;
   wire [15:0] audio_r;
-  // Placeholders until Task 5 and Task 8 fill them in.
-  wire [15:0] dn_addr = 0;
-  wire  [7:0] dn_data = 0;
-  wire        dn_wr = 0;
-  wire        dn_active = 0;
+
+  // ROM streaming from dataslot 1.
+  //
+  // data_loader splits APF's 32-bit bridge writes into bytes in address
+  // order, which is exactly the semantics rtl/bosconian.vhd already
+  // expects from the MiSTer ioctl interface, so the core needs no change.
+  //
+  // clk_memory is clk_core (the core's own 18.432 MHz clock, exposed by
+  // bosconian_pocket) rather than video_rgb_clock. data_loader holds
+  // write_en high for exactly one clk_memory cycle; using the core clock
+  // makes dn_wr a single-cycle pulse in the same domain the core samples
+  // it in, matching MiSTer's ioctl_wr (driven from its own ~18 MHz
+  // clk_sys, one cycle) instead of stretching the pulse across three core
+  // cycles the way a slower clk_memory would.
+  wire [15:0] dn_addr;
+  wire  [7:0] dn_data;
+  wire        dn_wr;
+  wire        clk_core;
+
+  // Held high from the first dataslot write until APF says every slot is
+  // complete; bosconian_pocket ORs this into core_reset for the whole
+  // transfer.
+  reg dn_active = 0;
+  always @(posedge clk_74a) begin
+    if (dataslot_requestwrite) dn_active <= 1;
+    else if (dataslot_allcomplete) dn_active <= 0;
+  end
+
+  data_loader #(
+      .ADDRESS_MASK_UPPER_4(4'h0),
+      .ADDRESS_SIZE(16),
+      .OUTPUT_WORD_SIZE(1)
+  ) rom_loader (
+      .clk_74a   (clk_74a),
+      .clk_memory(clk_core),
+
+      .bridge_wr           (bridge_wr),
+      .bridge_endian_little(bridge_endian_little),
+      .bridge_addr         (bridge_addr),
+      .bridge_wr_data      (bridge_wr_data),
+
+      .write_en  (dn_wr),
+      .write_addr(dn_addr),
+      .write_data(dn_data)
+  );
+
   wire  [7:0] dip_a = 8'h08;
   wire  [7:0] dip_b = 8'h68;
   wire        self_test = 0;
@@ -513,7 +554,8 @@ module core_top (
       .video_rgb_clock_90(video_rgb_clock_90),
       .audio_l(audio_l),
       .audio_r(audio_r),
-      .pll_locked(pll_core_locked)
+      .pll_locked(pll_core_locked),
+      .clk_core  (clk_core)
   );
   ///////////////////////////////////////////////
   sound_i2s #(
