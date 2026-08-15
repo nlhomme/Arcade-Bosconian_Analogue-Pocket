@@ -125,7 +125,7 @@ Run this from the root of the repository, with all five MAME zips
 (bosco.zip, namco50.zip, namco51.zip, namco52.zip, namco54.zip) sitting
 in one directory:
 
-  python3 pocket/tools/build_rom.py \\
+  python3 tools/build_rom.py \\
       --mra "releases/Bosconian - Star Destroyer (new version).mra" \\
       --roms ~/Downloads \\
       --out bosco.rom

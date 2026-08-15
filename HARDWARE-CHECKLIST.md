@@ -64,7 +64,7 @@ offset is not a regression introduced by this port.
 
 If it is stable, leave it alone. If it flips between boots and bothers
 you, the adjustment is `phase_shift1` in
-`pocket/src/fpga/core/mf_pllbase/mf_pllbase_0002.v` (picoseconds; one
+`src/fpga/core/mf_pllbase/mf_pllbase_0002.v` (picoseconds; one
 core slot is 54,257 ps). Do **not** reach for `video_ce` — that is the
 misaligned phase.
 
@@ -163,7 +163,7 @@ Nothing on this checklist should be fixed by editing it.
 
 ## When the checklist passes
 
-1. Update the status banner at the top of `pocket/README.md`.
+1. Update the status banner at the top of `README.md`.
 2. Tag `v0.1.0-pocket` and push it to cut the first release.
 
 The release workflow exists but has never fired. Watch the first tag push
