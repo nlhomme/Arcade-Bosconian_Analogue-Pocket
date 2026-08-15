@@ -99,7 +99,7 @@ def test_unrecognised_report_fails_rather_than_passing():
         assert main([str(report)]) == 1
 
 
-def test_truncated_table_fails():
+def test_truncation_before_header_fails():
     """A report cut off after the title must not count as timing met."""
     text = make_report().split("; Clock")[0]
     with tempfile.TemporaryDirectory() as d:
@@ -110,6 +110,21 @@ def test_truncated_table_fails():
             assert "header" in str(exc).lower()
         else:
             raise AssertionError("expected ValueError on truncated table")
+
+
+def test_truncation_mid_row_fails():
+    """Cut in the middle of a clock row, after Worst-case Slack parsed fine.
+    A half-written line is not a closing rule, and must not end the table."""
+    text = make_report()
+    text = text[: text.index(";  bridge_spiclk") + 20]
+    with tempfile.TemporaryDirectory() as d:
+        report = write(d, text)
+        try:
+            check_timing(report)
+        except ValueError as exc:
+            assert "bridge_spiclk" in str(exc) and "truncated" in str(exc)
+        else:
+            raise AssertionError("expected ValueError on mid-row truncation")
 
 
 def test_unreadable_value_fails():

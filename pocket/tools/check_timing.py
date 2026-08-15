@@ -14,11 +14,13 @@ Any negative number in that table is a failure. A report whose format is not
 recognised is also a failure: silence must never be read as "timing met".
 """
 import argparse
+import re
 import sys
 from pathlib import Path
 
 TABLE_TITLE = "Multicorner Timing Analysis Summary"
 WORST_CASE_ROW = "Worst-case Slack"
+RULE = re.compile(r"^\+[-+]+\+$")  # the +----+----+ rules framing a table
 
 
 def split_row(line):
@@ -51,9 +53,14 @@ def parse_summary(text):
     for line in lines[index + 1:]:
         cells = split_row(line)
         if cells is None:
+            if not RULE.match(line.strip()):
+                raise ValueError(
+                    f"{TABLE_TITLE}: unparseable line inside the table "
+                    f"(truncated report?): {line.strip()!r}"
+                )
             if rows:
-                break  # closing rule: end of table
-            continue  # +---+---+ rules around the header row
+                break  # the +---+---+ rule closing the table
+            continue  # the rules around the header row
         if columns is None:
             if cells[0] != "Clock":
                 raise ValueError(
