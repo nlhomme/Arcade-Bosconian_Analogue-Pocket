@@ -39,16 +39,9 @@ jobs:
           fi
 
       - name: Check timing closure
-        working-directory: pocket/src/fpga
         run: |
-          report=output_files/ap_core.sta.rpt
-          test -f "$report" || { echo "no STA report produced"; exit 1; }
-          if grep -qE "^; *(Setup|Hold|Recovery|Removal|Minimum Pulse Width) +; +-" "$report"; then
-            echo "::error::Timing not met. Failing slack paths:"
-            grep -nE "^; *(Setup|Hold|Recovery|Removal|Minimum Pulse Width) +; +-" "$report"
-            exit 1
-          fi
-          echo "Timing met."
+          python3 pocket/tools/check_timing.py \
+            pocket/src/fpga/output_files/ap_core.sta.rpt
 
       - name: Reverse bitstream
         run: |
