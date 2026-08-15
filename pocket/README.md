@@ -11,7 +11,9 @@ updated.
 
 ## Install
 
-1. Download `nlhomme.Bosconian.zip` from the releases page.
+1. Download `nlhomme.Bosconian.zip` from the releases page (none
+   published yet — until then, see "Building the gateware" below to
+   build it yourself).
 2. Extract it to the root of your Pocket's SD card. It adds
    `Cores/nlhomme.Bosconian/`, `Platforms/bosconian.json`, and an empty
    `Assets/bosconian/common/`.
@@ -48,8 +50,8 @@ offending filename rather than producing a black screen on the device.
 ## Options
 
 All DIP switches are in the Pocket's core options menu: difficulty,
-coinage, bonus, lives, cabinet type, demo sounds, allow continue, plus
-self-test and service.
+allow continue, demo sounds, freeze, cabinet type, coinage, bonus,
+lives, self-test, and service.
 
 Bonus values show two readings separated by `|` (e.g. "Bonus 20/70 |
 30/120/120") because the meaning depends on the Lives setting — this is
@@ -84,5 +86,6 @@ the `pocket-core` artifact. Tag with `v*` to cut a release.
 ## Licence
 
 GPLv2, inherited from the MiSTer core. The vendored openFPGA framework
-files under `pocket/src/fpga/apf/` and the utility modules (e.g.
-`data_loader.sv`) are MIT-licensed and retain their original headers.
+under `pocket/src/fpga/apf/` is covered by Analogue's Pocket Framework
+licence agreement; the utility modules (e.g. `data_loader.sv`,
+`sound_i2s.sv`) are MIT-licensed. All retain their original headers.

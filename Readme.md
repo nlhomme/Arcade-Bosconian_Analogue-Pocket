@@ -3,7 +3,7 @@
 FPGA implementation of the arcade game Bosconian - Star Destroyer, developed in
 1981 by Namco and released to Western audiences by Midway.
 
-An Analogue Pocket port of this core is available — see
+An Analogue Pocket port of this core is in progress — see
 [`pocket/README.md`](pocket/README.md).
 
 
