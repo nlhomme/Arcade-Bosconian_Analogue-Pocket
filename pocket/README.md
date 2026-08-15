@@ -85,7 +85,23 @@ the `pocket-core` artifact. Tag with `v*` to cut a release.
 
 ## Licence
 
-GPLv2, inherited from the MiSTer core. The vendored openFPGA framework
-under `pocket/src/fpga/apf/` is covered by Analogue's Pocket Framework
-licence agreement; the utility modules (e.g. `data_loader.sv`,
-`sound_i2s.sv`) are MIT-licensed. All retain their original headers.
+GPLv2, inherited from the MiSTer core, covers this port's own sources
+(`core/bosconian_pocket.sv`, `core/core_top.v`) and the shared `rtl/`
+core.
+
+Vendored third-party files keep their original headers and are
+governed by them:
+
+- Analogue's Pocket Framework licence agreement — `apf/apf_top.v`,
+  `apf/common.v`, `apf/io_bridge_peripheral.v`, `apf/io_pad_controller.v`
+- Intel / Altera IP licences (Quartus megafunction output) —
+  `apf/mf_datatable.v`, `apf/mf_ddio_bidir_12.v`, `apf/build_id_gen.tcl`,
+  `core/mf_pllbase.v`, `core/mf_pllbase.bsf`, `core/pin_ddio_clk.v`
+- MIT — `core/data_loader.sv`, `core/data_unloader.sv`,
+  `core/sound_i2s.sv`, `core/sync_fifo.sv`
+
+`core/core_bridge_cmd.v` carries only a bare "2022 Analogue" year/name
+comment with no licence grant; its terms are unclear and it is not
+claimed under any licence above.
+
+Consult each file's own header for the governing terms.
