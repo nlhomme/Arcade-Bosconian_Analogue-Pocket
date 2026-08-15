@@ -26,6 +26,18 @@ jobs:
       - name: Fix output ownership
         run: sudo chown -R "$(id -u):$(id -g)" pocket/src/fpga/output_files
 
+      - name: Print fit summary
+        working-directory: pocket/src/fpga
+        run: |
+          report=output_files/ap_core.fit.rpt
+          test -f "$report" || { echo "no fit report produced"; exit 1; }
+          if grep -qE "Logic utilization|ALMs|registers|block memory bits|RAM Blocks|^Device|^Family" "$report"; then
+            grep -E "Logic utilization|ALMs|registers|block memory bits|RAM Blocks|^Device|^Family" "$report"
+          else
+            echo "expected summary lines not found, printing first 60 lines instead:"
+            sed -n '1,60p' "$report"
+          fi
+
       - name: Check timing closure
         working-directory: pocket/src/fpga
         run: |
@@ -49,3 +61,14 @@ jobs:
         with:
           name: bitstream
           path: bitstream.rbf_r
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            pocket/src/fpga/output_files/ap_core.fit.rpt
+            pocket/src/fpga/output_files/ap_core.sta.rpt
+            pocket/src/fpga/output_files/ap_core.map.rpt
+          if-no-files-found: ignore
