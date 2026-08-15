@@ -779,44 +779,48 @@ This resolves as VCO = 737.28 MHz (18.432 × 40, and 737.28 / 6.144 = 120 exactl
 
 - [ ] **Step 2: Point Quartus at the shared RTL**
 
-Create `pocket/src/fpga/core/bosconian_rtl.qip`. Paths in a `.qip` resolve relative to the `.qip` file itself. This deliberately omits `rtl/pll*` (we use `mf_pllbase`), `rtl/hiscore.v`, and `rtl/pause.v` (out of scope for v1):
+Create `pocket/src/fpga/core/bosconian_rtl.qip`.
+
+**Path resolution — this bit an earlier attempt.** Bare relative paths inside a `.qip` resolve against the **project directory** (`pocket/src/fpga/`), *not* the `.qip` file's own directory. Every entry must therefore be wrapped in `[file join $::quartus(qip_path) "..."]`, which is the convention the vendored `apf/apf.qip` already uses. With `qip_path` = `pocket/src/fpga/core/`, `../../../../rtl/` then correctly resolves to `<repo>/rtl/`.
+
+Getting this wrong fails in a confusing way: the VHDL paths land at filesystem root (`/rtl/...`) as *warnings*, and the only hard error is an unrelated-looking "undefined entity bosconian_pocket".
+
+This deliberately omits `rtl/pll*` (we use `mf_pllbase`), `rtl/hiscore.v`, and `rtl/pause.v` (out of scope for v1), and `rtl/sp_palette.vhd` (verified: nothing under `rtl/` instantiates it, and the MiSTer `files.qip` omits it too):
 
 ```tcl
-set_global_assignment -name VHDL_FILE ../../../../rtl/cpu/T80se.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/cpu/T80_Reg.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/cpu/T80_Pack.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/cpu/T80_MCode.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/cpu/T80_ALU.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/cpu/T80.vhd
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/cpu/T80se.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/cpu/T80_Reg.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/cpu/T80_Pack.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/cpu/T80_MCode.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/cpu/T80_ALU.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/cpu/T80.vhd"]
 
-set_global_assignment -name VHDL_FILE ../../../../rtl/namco/namco_03xx/n03xx.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/namco/namco_05xx/n05xx.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/namco/namco_07xx/c07_syncgen.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/namco/namco_07xx/c07_syncgen_pack.vhd
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/namco/namco_03xx/n03xx.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/namco/namco_05xx/n05xx.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/namco/namco_07xx/c07_syncgen.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/namco/namco_07xx/c07_syncgen_pack.vhd"]
 
-set_global_assignment -name VHDL_FILE ../../../../rtl/luts/rom_2r.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/luts/rom_4m.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/luts/rom_6b.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/luts/rom_7h.vhd
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/luts/rom_2r.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/luts/rom_4m.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/luts/rom_6b.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/luts/rom_7h.vhd"]
 
-set_global_assignment -name VHDL_FILE ../../../../rtl/mb88.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/namco_06xx.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/sound_seq.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/sound_samples.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/sound_lpf.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/rgb.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/bg_palette.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/sp_palette.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/dpram.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/sound_machine.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/gen_ram.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/bosco_video_render.vhd
-set_global_assignment -name VHDL_FILE ../../../../rtl/bosconian.vhd
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/mb88.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/namco_06xx.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/sound_seq.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/sound_samples.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/sound_lpf.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/rgb.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/bg_palette.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/dpram.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/sound_machine.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/gen_ram.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/bosco_video_render.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../../../../rtl/bosconian.vhd"]
 
-set_global_assignment -name SYSTEMVERILOG_FILE bosconian_pocket.sv
+set_global_assignment -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "bosconian_pocket.sv"]
 ```
 
-Note `sp_palette.vhd` is included here even though the MiSTer `files.qip` omits it — confirm during the first compile whether it is required. If Quartus reports it as an unused duplicate entity, remove the line.
 
 - [ ] **Step 3: Register the qip in the project**
 
@@ -1765,7 +1769,7 @@ Install from the published release onto a clean SD card exactly as the readme in
 
 **`data_loader` clock choice.** Task 5 clocks it from the 6.144 MHz video clock. If ROM loading is unreliable, route the 18.432 MHz clock out of `bosconian_pocket` and use that instead.
 
-**`sp_palette.vhd`.** Present in `rtl/` but absent from the MiSTer `files.qip`. Included in `bosconian_rtl.qip` on the assumption it is needed; remove the line if Quartus reports it as unused or duplicate.
+**`sp_palette.vhd`.** RESOLVED during Task 4: excluded. Verified that nothing under `rtl/` instantiates it and that the MiSTer `files.qip` omits it too. The plan's original assumption that it was needed was wrong.
 
 **Pixel phase alignment.** The video retiming register free-runs at 6.144 MHz rather than being qualified by the core's `video_ce` output. This is correct only if the two clocks land on the intended phase. Task 4 Step 8 catches a gross failure (no stable picture); sheared or doubled pixels are the subtler symptom, and the fix is documented inline in `bosconian_pocket.sv`.
 
