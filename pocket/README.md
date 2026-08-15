@@ -25,17 +25,33 @@ updated.
 ROMs are not distributed. You need these MAME sets: `bosco.zip`,
 `namco50.zip`, `namco51.zip`, `namco52.zip`, `namco54.zip`.
 
-Put them in one directory and run:
+Put all five zips in one directory. Then, **from the root of this
+repository**, run — substituting your own ROM directory:
 
     python3 pocket/tools/build_rom.py \
       --mra "releases/Bosconian - Star Destroyer (new version).mra" \
-      --roms /path/to/your/roms \
-      --out bosco.rom \
-      --expect-size 0xE600
+      --roms ~/Downloads \
+      --out bosco.rom
 
-This produces a 58,880-byte (0xE600) image. Every part is CRC-checked
-against the `.mra`, so a wrong or corrupt ROM set fails here with the
-offending filename rather than producing a black screen on the device.
+You should see:
+
+    wrote bosco.rom (58880 bytes, 0xE600)
+
+Then copy that file onto your Pocket's SD card as:
+
+    Assets/bosconian/common/bosco.rom
+
+`python3 pocket/tools/build_rom.py -h` prints this same example.
+
+The `--mra` file is already in this repository — you do not need to find
+or download it. `--roms` takes the directory your `.zip` files are in,
+not the zips themselves. Every part is checked against the CRC recorded
+in the `.mra`, so a wrong or corrupt ROM set fails here naming the
+offending file, rather than producing a black screen on the device.
+
+If it reports `part '50xx.bin' not found`, you are missing one of the
+four `namco*.zip` sets — those hold the Namco MCU ROMs and are separate
+downloads from `bosco.zip`.
 
 ## Controls
 

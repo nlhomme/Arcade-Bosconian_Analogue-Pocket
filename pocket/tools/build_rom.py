@@ -118,21 +118,68 @@ def build_rom(mra_path, rom_dirs, out_path):
     return len(blob)
 
 
+EXAMPLE = """
+example
+-------
+Run this from the root of the repository, with all five MAME zips
+(bosco.zip, namco50.zip, namco51.zip, namco52.zip, namco54.zip) sitting
+in one directory:
+
+  python3 pocket/tools/build_rom.py \\
+      --mra "releases/Bosconian - Star Destroyer (new version).mra" \\
+      --roms ~/Downloads \\
+      --out bosco.rom
+
+That writes a 58,880-byte bosco.rom. Copy it to your Analogue Pocket's
+SD card as:
+
+  Assets/bosconian/common/bosco.rom
+
+Every part is checked against the CRC in the .mra, so a wrong or corrupt
+ROM set fails here, naming the offending file, instead of producing a
+black screen on the device.
+"""
+
+
 def main(argv=None):
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--mra", required=True, type=Path)
+    ap = argparse.ArgumentParser(
+        description="Build an Analogue Pocket .rom image from a MiSTer .mra "
+        "and a directory of MAME ROM zips.",
+        epilog=EXAMPLE,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    ap.add_argument(
+        "--mra",
+        required=True,
+        type=Path,
+        metavar="FILE.mra",
+        help="the .mra describing the ROM layout; for this repo that is "
+        '"releases/Bosconian - Star Destroyer (new version).mra"',
+    )
     ap.add_argument(
         "--roms",
         required=True,
         nargs="+",
         type=Path,
-        help="one or more directories containing the MAME zips",
+        metavar="DIR",
+        help="directory (or directories) holding the MAME .zip files. "
+        "Needed here: bosco.zip, namco50.zip, namco51.zip, namco52.zip, "
+        "namco54.zip",
     )
-    ap.add_argument("--out", required=True, type=Path)
+    ap.add_argument(
+        "--out",
+        required=True,
+        type=Path,
+        metavar="FILE.rom",
+        help="where to write the combined image. Goes on the SD card as "
+        "Assets/bosconian/common/bosco.rom",
+    )
     ap.add_argument(
         "--expect-size",
         type=lambda s: int(s, 0),
-        help="fail if the output is not exactly this many bytes",
+        metavar="N",
+        help="fail unless the output is exactly N bytes (accepts hex, e.g. "
+        "0xE600). For this game the correct size is 58880 / 0xE600",
     )
     args = ap.parse_args(argv)
 
