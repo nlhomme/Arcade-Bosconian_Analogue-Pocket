@@ -6,7 +6,7 @@
 
 **Architecture:** Vendor `agg23/openfpga-template` (Analogue's APF framework plus the standard MIT utility modules) into `pocket/`. A thin `core_top.v` owns the APF bridge and hands a narrow interface to `bosconian_pocket.sv`, which contains the PLL, video retiming, audio conversion, input mapping, and the `bosconian` VHDL instantiation. ROM images are built from the existing `.mra` by a standalone Python script. All gateware compilation happens in GitHub Actions because Quartus cannot run on the development machine.
 
-**Tech Stack:** Verilog/SystemVerilog (glue), VHDL (existing core, unmodified), Quartus Prime 17.1 Lite targeting Cyclone V `5CEBA4F23C8`, Python 3 stdlib (ROM tooling), GitHub Actions with `ghcr.io/raetro/quartus:17.1`.
+**Tech Stack:** Verilog/SystemVerilog (glue), VHDL (existing core, unmodified), Quartus Prime (raetro pocket image, 18.1.1-era) targeting Cyclone V `5CEBA4F23C8`, Python 3 stdlib (ROM tooling), GitHub Actions with `ghcr.io/raetro/quartus:pocket`.
 
 ## Global Constraints
 
@@ -472,7 +472,10 @@ on:
 jobs:
   synthesis:
     runs-on: ubuntu-latest
-    container: ghcr.io/raetro/quartus:17.1
+    # NOTE: superseded during implementation - see .github/workflows/pocket-build.yml.
+    # The container: key cannot work (image glibc too old for any Actions Node
+    # runtime); Quartus is invoked via `docker run` on ubuntu-latest instead,
+    # using ghcr.io/raetro/quartus:pocket (qsf is Quartus 18.1.1-generated).
 
     steps:
       - name: Checkout repository
@@ -522,7 +525,7 @@ git push fork analogue
 gh run watch
 ```
 
-Expected: the run completes green and the `bitstream` artifact is downloadable. If the container image fails to pull, try `raetro/quartus:17.1` (Docker Hub) instead of the GHCR path.
+Expected: the run completes green and the `bitstream` artifact is downloadable. If the image fails to pull, try `raetro/quartus:pocket` (Docker Hub) instead of the GHCR path.
 
 ---
 
@@ -1707,7 +1710,7 @@ behaves, not a labelling mistake.
 
 ## Building the gateware
 
-Compilation happens in GitHub Actions using Quartus 17.1 — see
+Compilation happens in GitHub Actions using the raetro `pocket` Quartus image — see
 `.github/workflows/pocket-build.yml`. Push to `analogue` and download
 the `pocket-core` artifact. Tag with `v*` to cut a release.
 
