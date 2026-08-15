@@ -528,13 +528,56 @@ module core_top (
       .write_data(dn_data)
   );
 
-  wire  [7:0] dip_a = 8'h08;
-  wire  [7:0] dip_b = 8'h68;
-  wire        self_test = 0;
-  wire        service = 0;
+  // DIP switches, written by interact.json variables.
+  //
+  // One address per field: no read-modify-write masks to get wrong, and
+  // each field can be tested independently on hardware. Values are held
+  // in the MiSTer .mra polarity; bosconian_pocket inverts at the core
+  // boundary, matching the MiSTer top level.
+  //
+  // Defaults reconstitute the .mra's default="08,68".
+  reg [1:0] dsw_difficulty = 2'd0;
+  reg       dsw_continue   = 1'b0;
+  reg       dsw_demosound  = 1'b1;
+  reg       dsw_freeze     = 1'b0;
+  reg       dsw_cabinet    = 1'b0;
+  reg [2:0] dsw_coinage    = 3'd0;
+  reg [2:0] dsw_bonus      = 3'd5;
+  reg [1:0] dsw_lives      = 2'd1;
+  reg       dsw_selftest   = 1'b0;
+  reg       dsw_service    = 1'b0;
+
+  reg reset_action = 0;
+
+  always @(posedge clk_74a) begin
+    reset_action <= 0;
+
+    if (bridge_wr) begin
+      case (bridge_addr)
+        32'h10000000: reset_action  <= bridge_wr_data[0];
+        32'h10020000: dsw_difficulty <= bridge_wr_data[1:0];
+        32'h10020004: dsw_continue   <= bridge_wr_data[0];
+        32'h10020008: dsw_demosound  <= bridge_wr_data[0];
+        32'h1002000C: dsw_freeze     <= bridge_wr_data[0];
+        32'h10020010: dsw_cabinet    <= bridge_wr_data[0];
+        32'h10020014: dsw_coinage    <= bridge_wr_data[2:0];
+        32'h10020018: dsw_bonus      <= bridge_wr_data[2:0];
+        32'h1002001C: dsw_lives      <= bridge_wr_data[1:0];
+        32'h10020020: dsw_selftest   <= bridge_wr_data[0];
+        32'h10020024: dsw_service    <= bridge_wr_data[0];
+        default: ;
+      endcase
+    end
+  end
+
+  wire [7:0] dip_a = {dsw_cabinet, 2'b00, dsw_freeze,
+                      dsw_demosound, dsw_continue, dsw_difficulty};
+  wire [7:0] dip_b = {dsw_lives, dsw_bonus, dsw_coinage};
+  wire       self_test = dsw_selftest;
+  wire       service = dsw_service;
   bosconian_pocket bc (
       .clk_74a(clk_74a),
-      .reset_n(reset_n),
+      .reset_n(reset_n & ~reset_action),
       .dn_addr  (dn_addr),
       .dn_data  (dn_data),
       .dn_wr    (dn_wr),
