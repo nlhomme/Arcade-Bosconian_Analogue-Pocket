@@ -1,0 +1,47 @@
+name: Pocket Build
+
+on:
+  push:
+    branches: [analogue]
+    paths-ignore: ['**.md']
+  pull_request:
+    branches: [analogue]
+    paths-ignore: ['**.md']
+  workflow_dispatch:
+
+jobs:
+  synthesis:
+    runs-on: ubuntu-latest
+    container: ghcr.io/raetro/quartus:17.1
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Compile
+        working-directory: pocket/src/fpga
+        run: quartus_sh --flow compile ap_core.qpf
+
+      - name: Check timing closure
+        working-directory: pocket/src/fpga
+        run: |
+          report=output_files/ap_core.sta.rpt
+          test -f "$report" || { echo "no STA report produced"; exit 1; }
+          if grep -qE "^; *(Setup|Hold|Recovery|Removal|Minimum Pulse Width) +; +-" "$report"; then
+            echo "::error::Timing not met. Failing slack paths:"
+            grep -nE "^; *(Setup|Hold|Recovery|Removal|Minimum Pulse Width) +; +-" "$report"
+            exit 1
+          fi
+          echo "Timing met."
+
+      - name: Reverse bitstream
+        run: |
+          python3 pocket/tools/reverse_rbf.py \
+            pocket/src/fpga/output_files/ap_core.rbf \
+            bitstream.rbf_r
+
+      - name: Upload bitstream
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitstream
+          path: bitstream.rbf_r
