@@ -3,6 +3,7 @@ name: Pocket Build
 on:
   push:
     branches: [analogue]
+    tags: ['v*']
     paths-ignore: ['**.md']
   pull_request:
     branches: [analogue]
@@ -73,3 +74,27 @@ jobs:
             pocket/src/fpga/output_files/ap_core.sta.rpt
             pocket/src/fpga/output_files/ap_core.map.rpt
           if-no-files-found: ignore
+
+  release:
+    needs: synthesis
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download core package
+        uses: actions/download-artifact@v4
+        with:
+          name: pocket-core
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: nlhomme.Bosconian.zip
+          body: |
+            Analogue Pocket core for Bosconian - Star Destroyer.
+
+            Extract the zip to the root of your SD card, then build a
+            ROM image and place it at
+            `Assets/bosconian/common/bosco.rom`.
+            See `pocket/README.md` for ROM build instructions.
