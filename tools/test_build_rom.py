@@ -168,6 +168,32 @@ def test_parse_mra_rejects_unsupported_attributes():
             raise AssertionError("expected ValueError on unsupported attribute")
 
 
+def test_main_reports_a_missing_mra_without_a_traceback():
+    import io, contextlib
+    from build_rom import main
+    err = io.StringIO()
+    with contextlib.redirect_stderr(err):
+        rc = main(["--mra", "nope.mra", "--roms", ".", "--out", "/tmp/none.rom"])
+    assert rc == 1
+    msg = err.getvalue()
+    assert "error: .mra file not found" in msg, msg
+    assert "Traceback" not in msg
+    assert "root of the repository" in msg
+def test_main_reports_a_roms_path_that_is_not_a_directory():
+    import io, contextlib, tempfile
+    from build_rom import main
+    with tempfile.TemporaryDirectory() as d:
+        tmp = Path(d)
+        mra, _, _ = make_fixture(tmp)
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            rc = main(["--mra", str(mra), "--roms", str(tmp / "first.zip"),
+                       "--out", str(tmp / "out.rom")])
+        assert rc == 1
+        msg = err.getvalue()
+        assert "not a directory" in msg, msg
+        assert "Traceback" not in msg
+
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):
         if name.startswith("test_"):

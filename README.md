@@ -7,14 +7,19 @@ The game logic in `rtl/` is the VHDL core originally written for MiSTer,
 carried over unchanged; everything under `src/` is the openFPGA framework
 around it.
 
-**Status: working on real hardware.** Confirmed booting and playing on an
-actual Analogue Pocket.
+The port itself — the framework glue, the ROM tooling, the CI pipeline
+and this documentation — was written with
+[Claude Code](https://claude.com/claude-code).
 
-The deeper checks in [`HARDWARE-CHECKLIST.md`](HARDWARE-CHECKLIST.md) have
-not been worked through yet — in particular the game's own ROM self-test,
-confirming each DIP switch produces the right effect, and repeated power
-cycles to see whether sprite-to-background alignment is stable. None of
-those are known to be wrong; they are simply unverified.
+**Status: working on real hardware.** Confirmed booting and playing on an
+actual Analogue Pocket, with the game's own self-test reporting
+**RAM OK / ROM OK** and the options menu holding state correctly.
+
+Some checks in [`HARDWARE-CHECKLIST.md`](HARDWARE-CHECKLIST.md) remain
+outstanding: confirming each DIP switch maps to the right setting,
+repeated power cycles to see whether sprite-to-background alignment is
+stable, and menu reset reliability. None is known to be wrong; they are
+simply unverified.
 
 ## About the game
 
@@ -27,54 +32,119 @@ came later in 1982, and Sinistar in 1983.
 
 ## Install
 
-1. Download `nlhomme.Bosconian.zip` from the releases page (none
-   published yet — until then, see "Building the gateware" below to
-   build it yourself).
+1. Download `nlhomme.Bosconian.zip` from the
+   [releases page](https://github.com/nlhomme/Arcade-Bosconian_Analogue-Pocket/releases).
 2. Extract it to the root of your Pocket's SD card. It adds
    `Cores/nlhomme.Bosconian/`, `Platforms/bosconian.json`, and an empty
    `Assets/bosconian/common/`.
-3. Build a ROM image (below). Placing it at
-   `Assets/bosconian/common/bosco.rom` is a convenient spot, but this core
-   has no default filename configured, so the Pocket will **not** load it
-   automatically.
-4. Launch the core on your Pocket and select `bosco.rom` from its file
-   browser (Load menu). Unlike cores that ship a fixed default ROM
-   filename, this core's data slot has none configured, so it always
-   presents the file picker rather than auto-loading -- copying the file
-   into place is not by itself enough.
+3. Build a ROM image (below) and put it at
+   `Assets/bosconian/common/bosco.rom`. The core loads that filename
+   automatically, so there is nothing to pick once it is in place.
+
+### A note on updater tools
+
+Tools like [pupdate](https://github.com/mattpannella/pupdate) install many
+cores' ROMs for you, by downloading them from the `openFPGA-Files`
+archive. **They cannot do that for this core** — it is not published in
+that archive, so there is nothing for them to fetch. Build the ROM
+yourself as described below; it is one command.
+
+This only affects the ROM. Nothing prevents an updater from installing or
+updating the core itself.
 
 ## Building the ROM
 
-ROMs are not distributed. You need these MAME sets: `bosco.zip`,
-`namco50.zip`, `namco51.zip`, `namco52.zip`, `namco54.zip`.
+The core needs a single file, `bosco.rom` (58,880 bytes). It is not
+distributed here — you assemble it from MAME ROM sets you already own,
+using a script in this repository.
 
-Put all five zips in one directory. Then, **from the root of this
-repository**, run — substituting your own ROM directory:
+### What you need
 
-    python3 tools/build_rom.py \
-      --mra "releases/Bosconian - Star Destroyer (new version).mra" \
-      --roms ~/Downloads \
-      --out bosco.rom
+**1. Python 3.** Already installed on macOS and Linux. On Windows, get it
+from [python.org](https://www.python.org/downloads/) and tick *"Add
+Python to PATH"* during install.
 
-You should see:
+**2. This repository.** The script and the ROM layout file both live
+here, and neither is inside the core zip.
 
-    wrote bosco.rom (58880 bytes, 0xE600)
+- On the [repository page](https://github.com/nlhomme/Arcade-Bosconian_Analogue-Pocket),
+  click **Code → Download ZIP**, then unzip it.
+- Or, if you use git: `git clone https://github.com/nlhomme/Arcade-Bosconian_Analogue-Pocket.git`
 
-Then copy that file onto your Pocket's SD card as:
+**3. Five MAME ROM sets**, all in one folder:
 
-    Assets/bosconian/common/bosco.rom
+| File | Contains |
+|---|---|
+| `bosco.zip` | the main game |
+| `namco50.zip` | Namco 50xx custom chip |
+| `namco51.zip` | Namco 51xx custom chip |
+| `namco52.zip` | Namco 52xx voice chip |
+| `namco54.zip` | Namco 54xx sound chip |
 
-`python3 tools/build_rom.py -h` prints this same example.
+All five are required. The four `namco*.zip` sets are separate downloads
+from `bosco.zip` — missing them is the most common failure.
 
-The `--mra` file is already in this repository — you do not need to find
-or download it. `--roms` takes the directory your `.zip` files are in,
-not the zips themselves. Every part is checked against the CRC recorded
-in the `.mra`, so a wrong or corrupt ROM set fails here naming the
-offending file, rather than producing a black screen on the device.
+Keep them zipped. Do not extract them.
 
-If it reports `part '50xx.bin' not found`, you are missing one of the
-four `namco*.zip` sets — those hold the Namco MCU ROMs and are separate
-downloads from `bosco.zip`.
+### Build it
+
+Open a terminal, move into the folder you unzipped or cloned, and run the
+command below — replacing `~/Downloads` with the folder holding your five
+zips:
+
+```
+cd Arcade-Bosconian_Analogue-Pocket
+
+python3 tools/build_rom.py \
+  --mra "releases/Bosconian - Star Destroyer (new version).mra" \
+  --roms ~/Downloads \
+  --out bosco.rom
+```
+
+On Windows, use `py` instead of `python3`, and put it on one line:
+
+```
+py tools\build_rom.py --mra "releases\Bosconian - Star Destroyer (new version).mra" --roms C:\Users\you\Downloads --out bosco.rom
+```
+
+Success looks like exactly this:
+
+```
+wrote bosco.rom (58880 bytes, 0xE600)
+```
+
+Any other output is a failure — the file is only written when every piece
+checks out.
+
+### Install it
+
+Copy the `bosco.rom` you just built to your Pocket's SD card at:
+
+```
+Assets/bosconian/common/bosco.rom
+```
+
+Create the folders if they are not there. The core loads that exact
+filename from that exact folder, so the game starts as soon as it is in
+place — there is nothing to select.
+
+### If it fails
+
+Every piece of the ROM is checked against a CRC recorded in the `.mra`
+file, so a wrong or corrupt set fails here, naming the file at fault,
+instead of producing a black screen on the device.
+
+| Message | Cause |
+|---|---|
+| `part '50xx.bin' not found` | Missing `namco50.zip` (likewise 51/52/54) |
+| `part 'bos3_1.3n' not found` | Missing `bosco.zip`, or you extracted it |
+| `CRC mismatch for ...` | That file is corrupt, or from a different ROM set |
+| `.mra file not found` | You are not in the repository folder — `cd` into it first |
+| `not a directory` | `--roms` needs the *folder*, not a `.zip` file |
+| `python3: command not found` | Try `python` or `py` |
+
+`python3 tools/build_rom.py -h` prints a worked example with these same
+paths.
 
 ## Controls
 
@@ -119,7 +189,7 @@ Compilation happens in GitHub Actions using the raetro `pocket` Quartus
 image (`ghcr.io/raetro/quartus:pocket`) — see
 `.github/workflows/pocket-build.yml`. The vendored `ap_core.qsf` was
 generated by Quartus 18.1.1, not the older Quartus 17.1 toolchain used
-elsewhere in openFPGA documentation. Push to `master` and download
+elsewhere in openFPGA documentation. Push to `main` and download
 the `pocket-core` artifact. Tag with `v*` to cut a release.
 
 ## Credits
@@ -141,6 +211,11 @@ repository adds the Analogue Pocket framework around it.
 * **Adam Gastineau (agg23)** — the openFPGA template and utility modules
   this port is built on
 * **Analogue** — the Pocket Framework (APF)
+
+The openFPGA port was developed with [Claude Code](https://claude.com/claude-code):
+the glue in `src/fpga/core/`, the `tools/` scripts and their tests, the
+GitHub Actions build, and the documentation. The game core in `rtl/` is
+untouched upstream work by the people listed above.
 
 ## Licence
 

@@ -22,6 +22,7 @@ jobs:
           cd tools
           python3 test_build_rom.py
           python3 test_check_timing.py
+          python3 test_stamp_version.py
           python3 test_reverse_rbf.py
 
       - name: Compile
@@ -63,6 +64,7 @@ jobs:
           mkdir -p package/Assets/bosconian/common
           rm -f package/Assets/bosconian/common/.gitkeep
           cp bitstream.rbf_r package/Cores/nlhomme.Bosconian/bitstream.rbf_r
+          python3 tools/stamp_version.py package/Cores/nlhomme.Bosconian/core.json
           ( cd package && zip -r ../nlhomme.Bosconian.zip . )
 
       - name: Upload core package
