@@ -183,6 +183,31 @@ def main(argv=None):
     )
     args = ap.parse_args(argv)
 
+    # Check the inputs before doing any work. Running from the wrong
+    # directory is the most common mistake, and a bare traceback tells the
+    # reader nothing about how to fix it.
+    if not args.mra.is_file():
+        print(f"error: .mra file not found: {args.mra}", file=sys.stderr)
+        print(
+            "       run this from the root of the repository, the folder "
+            "that contains releases/",
+            file=sys.stderr,
+        )
+        return 1
+
+    not_dirs = [d for d in args.roms if not d.is_dir()]
+    if not_dirs:
+        print(
+            f"error: not a directory: {', '.join(str(d) for d in not_dirs)}",
+            file=sys.stderr,
+        )
+        print(
+            "       --roms takes the folder your .zip files are in, "
+            "not the .zip files themselves",
+            file=sys.stderr,
+        )
+        return 1
+
     try:
         written = build_rom(args.mra, args.roms, args.out)
     except ValueError as exc:

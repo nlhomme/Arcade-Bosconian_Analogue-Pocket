@@ -50,39 +50,97 @@ updating the core itself.
 
 ## Building the ROM
 
-ROMs are not distributed. You need these MAME sets: `bosco.zip`,
-`namco50.zip`, `namco51.zip`, `namco52.zip`, `namco54.zip`.
+The core needs a single file, `bosco.rom` (58,880 bytes). It is not
+distributed here — you assemble it from MAME ROM sets you already own,
+using a script in this repository.
 
-Put all five zips in one directory. Then, **from the root of this
-repository**, run — substituting your own ROM directory:
+### What you need
 
-    python3 tools/build_rom.py \
-      --mra "releases/Bosconian - Star Destroyer (new version).mra" \
-      --roms ~/Downloads \
-      --out bosco.rom
+**1. Python 3.** Already installed on macOS and Linux. On Windows, get it
+from [python.org](https://www.python.org/downloads/) and tick *"Add
+Python to PATH"* during install.
 
-You should see:
+**2. This repository.** The script and the ROM layout file both live
+here, and neither is inside the core zip.
 
-    wrote bosco.rom (58880 bytes, 0xE600)
+- On the [repository page](https://github.com/nlhomme/Arcade-Bosconian_Analogue-Pocket),
+  click **Code → Download ZIP**, then unzip it.
+- Or, if you use git: `git clone https://github.com/nlhomme/Arcade-Bosconian_Analogue-Pocket.git`
 
-Then copy that file onto your Pocket's SD card as:
+**3. Five MAME ROM sets**, all in one folder:
 
-    Assets/bosconian/common/bosco.rom
+| File | Contains |
+|---|---|
+| `bosco.zip` | the main game |
+| `namco50.zip` | Namco 50xx custom chip |
+| `namco51.zip` | Namco 51xx custom chip |
+| `namco52.zip` | Namco 52xx voice chip |
+| `namco54.zip` | Namco 54xx sound chip |
 
-The core is configured to load exactly that filename from that folder, so
-the game starts as soon as it is in place.
+All five are required. The four `namco*.zip` sets are separate downloads
+from `bosco.zip` — missing them is the most common failure.
 
-`python3 tools/build_rom.py -h` prints this same example.
+Keep them zipped. Do not extract them.
 
-The `--mra` file is already in this repository — you do not need to find
-or download it. `--roms` takes the directory your `.zip` files are in,
-not the zips themselves. Every part is checked against the CRC recorded
-in the `.mra`, so a wrong or corrupt ROM set fails here naming the
-offending file, rather than producing a black screen on the device.
+### Build it
 
-If it reports `part '50xx.bin' not found`, you are missing one of the
-four `namco*.zip` sets — those hold the Namco MCU ROMs and are separate
-downloads from `bosco.zip`.
+Open a terminal, move into the folder you unzipped or cloned, and run the
+command below — replacing `~/Downloads` with the folder holding your five
+zips:
+
+```
+cd Arcade-Bosconian_Analogue-Pocket
+
+python3 tools/build_rom.py \
+  --mra "releases/Bosconian - Star Destroyer (new version).mra" \
+  --roms ~/Downloads \
+  --out bosco.rom
+```
+
+On Windows, use `py` instead of `python3`, and put it on one line:
+
+```
+py tools\build_rom.py --mra "releases\Bosconian - Star Destroyer (new version).mra" --roms C:\Users\you\Downloads --out bosco.rom
+```
+
+Success looks like exactly this:
+
+```
+wrote bosco.rom (58880 bytes, 0xE600)
+```
+
+Any other output is a failure — the file is only written when every piece
+checks out.
+
+### Install it
+
+Copy the `bosco.rom` you just built to your Pocket's SD card at:
+
+```
+Assets/bosconian/common/bosco.rom
+```
+
+Create the folders if they are not there. The core loads that exact
+filename from that exact folder, so the game starts as soon as it is in
+place — there is nothing to select.
+
+### If it fails
+
+Every piece of the ROM is checked against a CRC recorded in the `.mra`
+file, so a wrong or corrupt set fails here, naming the file at fault,
+instead of producing a black screen on the device.
+
+| Message | Cause |
+|---|---|
+| `part '50xx.bin' not found` | Missing `namco50.zip` (likewise 51/52/54) |
+| `part 'bos3_1.3n' not found` | Missing `bosco.zip`, or you extracted it |
+| `CRC mismatch for ...` | That file is corrupt, or from a different ROM set |
+| `.mra file not found` | You are not in the repository folder — `cd` into it first |
+| `not a directory` | `--roms` needs the *folder*, not a `.zip` file |
+| `python3: command not found` | Try `python` or `py` |
+
+`python3 tools/build_rom.py -h` prints a worked example with these same
+paths.
 
 ## Controls
 
