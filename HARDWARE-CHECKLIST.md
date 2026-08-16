@@ -1,8 +1,9 @@
 # Hardware bring-up checklist
 
-**The port boots and plays correctly on a real Analogue Pocket**, and the
-game's own self-test reports **RAM OK / ROM OK**. Sections 1, 2, 4 and 5
-(self-test, boot/attract, controls, audio) are confirmed.
+**The port boots and plays correctly on a real Analogue Pocket**, the
+game's own self-test reports **RAM OK / ROM OK**, and the options menu
+works — checkboxes hold state and toggle both ways. Sections 1, 2, 4 and
+5 are confirmed, and Freeze in section 8 is confirmed working.
 The passing self-test is worth more than it looks: it checksums the ROMs
 on real silicon, so it validates the whole load path — SD card, data
 slot, bridge, FIFO, block RAM — and retires the risk that the loader's
@@ -138,7 +139,8 @@ bit ordering was derived by reading the `.mra`, never observed running.
 - [ ] **Demo Sounds** — off makes attract mode silent
 - [ ] **Allow Continue** — die out, check a continue is offered
 - [ ] **Cocktail Cabinet** — player 2's view flips in a 2-player game
-- [ ] **Freeze** — gameplay halts
+- [x] **Freeze** — gameplay halts (confirmed; note the sound hardware
+      keeps sounding its last tone, which is what the original board does)
 
 Free Play and Cocktail Cabinet deserve explicit attention: every other
 setting has a plausible fallback reading, but those two can only be
