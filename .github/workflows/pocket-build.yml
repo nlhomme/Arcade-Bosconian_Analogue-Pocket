@@ -23,6 +23,8 @@ jobs:
           python3 test_build_rom.py
           python3 test_check_timing.py
           python3 test_stamp_version.py
+          python3 test_make_icon.py
+          python3 test_make_banner.py
           python3 test_reverse_rbf.py
 
       - name: Compile
