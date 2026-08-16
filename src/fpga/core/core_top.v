@@ -306,24 +306,6 @@ module core_top (
   assign vpll_feed               = 1'bZ;
 
 
-  // for bridge write data, we just broadcast it to all bus devices
-  // for bridge read data, we have to mux it
-  // add your own devices here
-  always @(*) begin
-    casex (bridge_addr)
-      default: begin
-        bridge_rd_data <= 0;
-      end
-      32'h10xxxxxx: begin
-        // example
-        // bridge_rd_data <= example_device_data;
-        bridge_rd_data <= 0;
-      end
-      32'hF8xxxxxx: begin
-        bridge_rd_data <= cmd_bridge_rd_data;
-      end
-    endcase
-  end
 
 
   //
@@ -554,6 +536,44 @@ module core_top (
   wire [7:0] dip_b = {dsw_lives, dsw_bonus, dsw_coinage};
   wire       self_test = dsw_selftest;
   wire       service = dsw_service;
+
+  // for bridge write data, we just broadcast it to all bus devices
+  // for bridge read data, we have to mux it
+  //
+  // The option registers below MUST be readable. APF reads a variable's
+  // current value back to render its control -- a checkbox shows as ticked
+  // only if the read returns its `value`. The template's placeholder
+  // returned 0 for the whole 0x10xxxxxx range, so every checkbox rendered
+  // unticked no matter what had been written, and every tick was treated
+  // as an off->on transition that wrote a 1 again. The result was a switch
+  // that could be turned on but never off.
+  always @(*) begin
+    casex (bridge_addr)
+      default: begin
+        bridge_rd_data <= 0;
+      end
+
+      // Reset is a momentary action, not a state: always reads back 0.
+      32'h10000000: bridge_rd_data <= 32'd0;
+
+      32'h10020000: bridge_rd_data <= {30'd0, dsw_difficulty};
+      32'h10020004: bridge_rd_data <= {31'd0, dsw_continue};
+      32'h10020008: bridge_rd_data <= {31'd0, dsw_demosound};
+      32'h1002000C: bridge_rd_data <= {31'd0, dsw_freeze};
+      32'h10020010: bridge_rd_data <= {31'd0, dsw_cabinet};
+      32'h10020014: bridge_rd_data <= {29'd0, dsw_coinage};
+      32'h10020018: bridge_rd_data <= {29'd0, dsw_bonus};
+      32'h1002001C: bridge_rd_data <= {30'd0, dsw_lives};
+      32'h10020020: bridge_rd_data <= {31'd0, dsw_selftest};
+      32'h10020024: bridge_rd_data <= {31'd0, dsw_service};
+
+      32'hF8xxxxxx: begin
+        bridge_rd_data <= cmd_bridge_rd_data;
+      end
+    endcase
+  end
+
+
   bosconian_pocket bc (
       .clk_74a(clk_74a),
       .reset_n(reset_n & ~reset_action),
