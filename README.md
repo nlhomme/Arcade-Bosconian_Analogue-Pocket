@@ -194,43 +194,32 @@ the `pocket-core` artifact. Tag with `v*` to cut a release.
 
 ## Artwork
 
-The core currently ships with no artwork, so it shows as a plain entry
-both on the Pocket and in the cores inventory. Three images are involved,
-in two different places.
+### On the Pocket
 
-### On the cores inventory website
+Both images ship inside the core zip, so the Pocket shows a proper icon
+and banner once the core is installed:
 
-The [inventory](https://openfpga-library.github.io/analogue-pocket/)
-serves these from its own repository, not from here. They are added by
-opening a pull request against
-[openfpga-library/analogue-pocket](https://github.com/openfpga-library/analogue-pocket):
+| Path in `dist/` | Dimensions | Size | Shown as |
+|---|---|---|---|
+| `Cores/nlhomme.Bosconian/icon.bin` | 36 × 36 | 2,592 bytes | core icon |
+| `Platforms/_images/bosconian.bin` | 521 × 165 | 171,930 bytes | platform banner |
 
-| Path in that repo | Size | Shown as |
-|---|---|---|
-| `assets/images/platforms/bosconian.png` | 521 × 165 | the card image |
-| `assets/images/authors/nlhomme.Bosconian.png` | 36 × 36 | the small core icon |
+They are a Pocket-specific binary format, not PNG: 2 bytes per pixel,
+where only the low byte carries a value and the high byte is `0x00`
+throughout. That makes them 8-bit masks rather than colour images — `0`
+is transparent, `255` fully lit — which is why Pocket artwork reads as
+light shapes on a dark background.
 
-Plain PNGs. Until they exist the site falls back to nothing, which is why
-the entry looks bare.
+The two differ in pixel order: the **icon is stored column-major**
+(index = `x * 36 + y`), the **banner row-major**. Getting that backwards
+produces a transposed image rather than an obviously broken one, so it is
+worth checking a result before shipping it.
 
-### On the Pocket itself
+The sizes are exact. A 32 × 32 icon (2,048 bytes) is not accepted — every
+core surveyed uses 2,592 bytes.
 
-These ship inside the core zip and are a Pocket-specific binary format,
-**not** PNG:
-
-| Path in `dist/` | Size | Shown as |
-|---|---|---|
-| `Platforms/_images/bosconian.bin` | 521 × 165, 171,930 bytes | platform banner |
-| `Cores/nlhomme.Bosconian/icon.bin` | 36 × 36, 2,592 bytes | core icon |
-
-Both are 2 bytes per pixel. The encoding is not plain RGB565 — a sample
-of shipping images decodes to a mostly-transparent mask with very few
-distinct values — so convert artwork with
-[agg23/Analogue-Pocket-Image-Process](https://github.com/agg23/Analogue-Pocket-Image-Process)
-rather than rolling your own.
-
-Drop the converted files at those paths under `dist/` and they are
-packaged into the release automatically; the build copies all of `dist/`.
+Anything placed under `dist/` is packaged into the release automatically;
+the build copies the whole tree.
 
 ## Credits
 
