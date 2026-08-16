@@ -1,15 +1,18 @@
 {
-  "data": {
-    "magic": "APF_VER_1",
-    "data_slots": [
-      {
-        "name": "ROM",
-        "id": 1,
-        "required": true,
-        "parameters": 0,
-        "extensions": ["rom"],
-        "address": "0x00000000"
-      }
-    ]
-  }
+    "data": {
+        "magic": "APF_VER_1",
+        "data_slots": [
+            {
+                "name": "ROM",
+                "filename": "bosco.rom",
+                "id": 1,
+                "required": true,
+                "parameters": 0,
+                "extensions": [
+                    "rom"
+                ],
+                "address": "0x00000000"
+            }
+        ]
+    }
 }
