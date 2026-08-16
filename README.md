@@ -7,6 +7,10 @@ The game logic in `rtl/` is the VHDL core originally written for MiSTer,
 carried over unchanged; everything under `src/` is the openFPGA framework
 around it.
 
+The port itself — the framework glue, the ROM tooling, the CI pipeline
+and this documentation — was written with
+[Claude Code](https://claude.com/claude-code).
+
 **Status: working on real hardware.** Confirmed booting and playing on an
 actual Analogue Pocket, with the game's own self-test reporting
 **RAM OK / ROM OK** and the options menu holding state correctly.
@@ -207,6 +211,11 @@ repository adds the Analogue Pocket framework around it.
 * **Adam Gastineau (agg23)** — the openFPGA template and utility modules
   this port is built on
 * **Analogue** — the Pocket Framework (APF)
+
+The openFPGA port was developed with [Claude Code](https://claude.com/claude-code):
+the glue in `src/fpga/core/`, the `tools/` scripts and their tests, the
+GitHub Actions build, and the documentation. The game core in `rtl/` is
+untouched upstream work by the people listed above.
 
 ## Licence
 
