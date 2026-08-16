@@ -221,6 +221,32 @@ core surveyed uses 2,592 bytes.
 Anything placed under `dist/` is packaged into the release automatically;
 the build copies the whole tree.
 
+### Converting artwork
+
+Two scripts in `tools/` convert a PNG to these formats and back:
+
+```
+python3 tools/make_icon.py   encode art.png icon.bin        # 36 x 36
+python3 tools/make_banner.py encode art.png bosconian.bin   # 521 x 165
+```
+
+Both take the alpha channel when the PNG has one and luminance
+otherwise, so draw light shapes on a transparent background. Each rejects
+a PNG that is not exactly the right size rather than scaling it.
+
+Each also decodes, which is worth doing before shipping an image — a
+wrong pixel order gives a transposed picture, not an obvious error:
+
+```
+python3 tools/make_icon.py   decode icon.bin      preview.png
+python3 tools/make_banner.py decode bosconian.bin preview.png
+```
+
+They reproduce shipping artwork byte-for-byte through a decode/encode
+round trip, which is what establishes that the formats above are right.
+`make_banner.py` uses the PNG reader in `make_icon.py`, so keep the two
+together.
+
 ## Credits
 
 The game core is the work of the MiSTer Bosconian project; this
